@@ -268,6 +268,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第44集]熱力學第二定律",
     "youtube": "https://www.youtube.com/watch?v=snCLDCCR16Y"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第45集]熵",
+    "youtube": "https://www.youtube.com/watch?v=nyoPdl4KIT4"
   }
 ];
 

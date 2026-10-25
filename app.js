@@ -7,8 +7,8 @@ function youtubeId(url) {
 
 // 「[第5集]會自己變化的量」→ 集數 5、標題「會自己變化的量」
 function parseTitle(title) {
-  const m = String(title).match(/^\s*\[?\s*第\s*(\d+)\s*集\s*\]?\s*(.*)$/);
-  return m ? { ep: Number(m[1]), name: m[2] || title } : { ep: null, name: title };
+  const m = String(title).match(/^\s*\[?\s*(第[一二三四五六七八九十百零〇兩\d]+期)?\s*第\s*(\d+)\s*集\s*\]?\s*(.*)$/);
+  return m ? { phase: m[1] || "", ep: Number(m[2]), name: m[3] || title } : { phase: "", ep: null, name: title };
 }
 
 const videos = VIDEOS
@@ -26,7 +26,7 @@ for (const v of videos) {
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pad = (n) => String(n).padStart(2, "0");
-const epLabel = (v) => (v.ep != null ? `EP ${pad(v.ep)}` : "EP");
+const epLabel = (v) => `${v.phase ? v.phase + " · " : ""}${v.ep != null ? `EP ${pad(v.ep)}` : "EP"}`;
 const thumb = (v, size = "hqdefault") => `https://i.ytimg.com/vi/${v.id}/${size}.jpg`;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const pick = (list) => list[Math.floor(Math.random() * list.length)];

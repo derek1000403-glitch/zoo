@@ -187,48 +187,6 @@ function unitInfo(name) {
   return { no: i + 1, color, desc: cfg.desc || "", icon: pixelIcon(i, color) };
 }
 
-// ---------- 學習地圖 ----------
-
-function goToUnit(name) {
-  if (search.value) search.value = "";
-  currentCategory = "全部";
-  renderTabs();
-  render();
-  const el = $(`unit-${unitInfo(name).no}`);
-  if (el) el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-}
-
-function renderMap() {
-  const track = $("map-track");
-  const next = nextUp().v;
-  const cur = next ? next.category : unitNames[0];
-  track.innerHTML = "";
-  for (const name of unitNames) {
-    const list = playlists.get(name);
-    const u = unitInfo(name);
-    const done = doneCount(list);
-    const complete = done === list.length;
-    const li = document.createElement("li");
-    li.className = "stop" + (name === cur ? " current" : "") + (complete ? " complete" : "");
-    li.style.setProperty("--u", u.color);
-    li.style.setProperty("--p", Math.round((done / list.length) * 100));
-    li.innerHTML = `
-      <button class="stop-btn" aria-label="${esc(name)}，已完成 ${done} / ${list.length} 集">
-        <span class="ring"><span class="tile">${u.icon}</span>${complete ? `<span class="stop-check">${CHECK}</span>` : ""}</span>
-        <span class="stop-no">UNIT ${pad(u.no)}</span>
-        <strong>${esc(name)}</strong>
-        <span class="stop-meta">${complete ? "全部完成" : `${done} / ${list.length} 集`}</span>
-      </button>
-      ${name === cur ? `<span class="stop-mascot">${mascot("bob")}<em>你在這裡</em></span>` : ""}`;
-    li.querySelector("button").onclick = () => goToUnit(name);
-    track.appendChild(li);
-  }
-  const all = doneCount(videos);
-  $("map-where").innerHTML = all === videos.length
-    ? `全部 <strong>${videos.length}</strong> 集都看完了，太強了！🏆`
-    : `已完成 <strong>${all}</strong> / ${videos.length} 集 · 下一站：<strong>${esc(cur)}</strong>`;
-}
-
 // ---------- 影片卡片與單元 ----------
 
 function cardStatus(v) {
@@ -346,7 +304,6 @@ document.addEventListener("pointermove", (e) => {
 
 function refreshAll() {
   renderHero();
-  renderMap();
   render();
 }
 

@@ -52,8 +52,16 @@ kbd {
 
 /* ---------- 吉祥物 ---------- */
 .mascot { display: block; width: 100%; height: auto; overflow: visible; }
-.mascot .m-eyes { transform-box: fill-box; transform-origin: center; animation: blink 5s infinite; }
-@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.15); } }
+.mascot .m-eyes { transform-box: fill-box; transform-origin: center bottom; animation: blink 5s infinite; }
+@keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.5); } }
+.mascot .m-look, .mascot .m-body { transition: transform .16s steps(2); }
+.look-c .m-look { transform: translateX(1px); }
+.look-r .m-look { transform: translateX(2px); }
+.sitting .m-body { transform: translateY(2px); }
+.sleeping .m-eyes { animation: none; transform: scaleY(.5); }
+.waving .m-arm-r { animation: wave .3s steps(1) infinite; }
+.waving.both .m-arm-l { animation: wave .3s steps(1) infinite .15s; }
+@keyframes wave { 0% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .walking .m-legs-a { animation: step .36s steps(1) infinite; }
 .walking .m-legs-b { animation: step .36s steps(1) infinite .18s; }
 @keyframes step { 0% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
@@ -153,7 +161,16 @@ kbd {
   transition: transform .35s var(--ease), box-shadow .35s;
 }
 .sign:hover { transform: translateY(-4px) rotate(-.6deg); box-shadow: 0 32px 70px -14px rgba(255, 92, 138, .7), inset 0 2px 0 rgba(255, 255, 255, .35); }
-.sign-mascot { position: absolute; left: 14%; top: 4px; z-index: 2; width: 84px; transform: translateY(-100%); cursor: pointer; }
+.sign-mascot { position: absolute; left: 15%; top: 3px; z-index: 2; width: 74px; transform: translateY(-100%); cursor: pointer; }
+.away { visibility: hidden; }
+
+/* 吉祥物跳進影片的動畫 */
+.flyer { position: fixed; z-index: 2000; pointer-events: none; will-change: transform; }
+.splash { animation: splash .7s ease-out; }
+@keyframes splash {
+  0% { box-shadow: 0 0 0 0 rgba(255, 154, 98, .95), 0 0 0 0 rgba(255, 92, 138, .7); filter: brightness(1.5); }
+  100% { box-shadow: 0 0 0 26px rgba(255, 154, 98, 0), 0 0 0 48px rgba(255, 92, 138, 0); filter: none; }
+}
 .sign-kicker { font-size: .82rem; font-weight: 700; letter-spacing: .12em; opacity: .92; }
 .sign-title { font-size: clamp(1.6rem, 3.4vw, 2.3rem); font-weight: 900; line-height: 1.2; text-shadow: 0 2px 0 rgba(120, 30, 40, .25); }
 .sign-sub { font-size: .92rem; font-weight: 700; color: #ffe9a8; }
@@ -321,7 +338,35 @@ dialog::backdrop { background: rgba(0, 0, 0, .78); backdrop-filter: blur(10px); 
 .icon-only { width: 38px; padding: 0; justify-content: center; }
 
 .player-body { display: grid; grid-template-columns: minmax(0, 1fr) 380px; min-height: 0; flex: 1; }
-.player-main { padding: 20px 22px 24px; overflow-y: auto; }
+.player-main { padding: 58px 22px 24px; overflow-y: auto; }
+
+/* 影片上方給吉祥物活動的小平台（不會蓋到影片） */
+.frame-wrap { position: relative; }
+.lane { position: absolute; left: 0; right: 0; bottom: 100%; height: 58px; pointer-events: none; }
+.buddy { position: absolute; left: 0; bottom: 0; width: 50px; opacity: 0; pointer-events: auto; cursor: pointer; }
+.buddy.show { opacity: 1; }
+.buddy-hop { transform-origin: 50% 100%; }
+.bubble {
+  position: absolute; left: calc(100% + 8px); bottom: 12px;
+  padding: 5px 11px; border-radius: 11px; white-space: nowrap;
+  background: #fff; color: #1b1b22; font-size: .82rem; font-weight: 700;
+  opacity: 0; transform: translateY(4px) scale(.9); transform-origin: left bottom;
+  transition: opacity .2s, transform .25s var(--ease); pointer-events: none;
+}
+.bubble::before { content: ""; position: absolute; left: -5px; bottom: 7px; border: 5px solid transparent; border-left: 0; border-right-color: #fff; }
+.bubble.left { left: auto; right: calc(100% + 8px); transform-origin: right bottom; }
+.bubble.left::before { left: auto; right: -5px; border-right: 0; border-left: 5px solid #fff; }
+.talking .bubble { opacity: 1; transform: none; }
+.zzz { position: absolute; left: 62%; bottom: 60%; opacity: 0; transition: opacity .4s; pointer-events: none; font-family: "Silkscreen", monospace; color: #c3bcff; }
+.asleep .zzz { opacity: 1; }
+.zzz i { position: absolute; font-style: normal; font-size: 10px; opacity: 0; animation: zz 2.4s infinite; }
+.zzz i:nth-child(2) { font-size: 12px; animation-delay: .8s; }
+.zzz i:nth-child(3) { font-size: 15px; animation-delay: 1.6s; }
+@keyframes zz { 0% { opacity: 0; transform: translate(0, 0); } 25% { opacity: 1; } 100% { opacity: 0; transform: translate(16px, -26px); } }
+.lane-pixel { position: absolute; bottom: 36px; width: 7px; height: 7px; margin-left: -3px; animation: float .9s ease-in-out infinite alternate; }
+@keyframes float { to { transform: translateY(-6px); } }
+.lane-pixel.pop { animation: pixpop .3s forwards; }
+@keyframes pixpop { to { transform: scale(2.6); opacity: 0; } }
 .frame { aspect-ratio: 16 / 9; background: #000; border-radius: 14px; overflow: hidden; box-shadow: 0 0 0 1px var(--border); }
 .frame iframe, .frame #yt { display: block; width: 100%; height: 100%; border: 0; }
 .now-info h2 { margin: 18px 0 2px; font-size: 1.45rem; font-weight: 900; line-height: 1.35; }
@@ -406,7 +451,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .78); backdrop-filter: blur(10px); 
   .stats { gap: 28px; margin-top: 30px; }
   .stats dd { font-size: 1.5rem; }
   .sign { padding: 24px 18px 20px; }
-  .sign-mascot { width: 64px; }
+  .sign-mascot { width: 58px; }
   .pixels { width: 64px; height: 60px; }
   .poles { height: 56px; }
   .unit-head { grid-template-columns: auto 1fr; }
@@ -419,7 +464,9 @@ dialog::backdrop { background: rgba(0, 0, 0, .78); backdrop-filter: blur(10px); 
   .player-top { padding: 10px 12px 10px 16px; padding-top: max(10px, env(safe-area-inset-top)); }
   .icon-btn span { display: none; }
   .icon-btn { width: 38px; padding: 0; justify-content: center; }
-  .player-main { padding: 0 0 18px; }
+  .player-main { padding: 48px 0 18px; }
+  .lane { height: 48px; }
+  .buddy { width: 42px; }
   .frame { border-radius: 0; box-shadow: none; }
   .now-info, .controls { padding: 0 16px; }
   .now-info h2 { font-size: 1.2rem; margin-top: 14px; }

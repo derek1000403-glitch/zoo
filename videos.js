@@ -550,6 +550,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第36集]導電機制",
     "youtube": "https://www.youtube.com/watch?v=jgJ38tO_neM"
+  },
+  {
+    "category": "第二期・電路",
+    "description": "",
+    "title": "[第二期第37集]基爾霍夫定律",
+    "youtube": "https://www.youtube.com/watch?v=Qk0BHKOfSHM"
   }
 ];
 

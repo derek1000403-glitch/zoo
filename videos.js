@@ -364,6 +364,36 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第5集]高斯定理的應用",
     "youtube": "https://www.youtube.com/watch?v=V4HuOlHxpFk"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第6集]電勢與電勢差",
+    "youtube": "https://www.youtube.com/watch?v=sLWNaiHlwV4"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第7集]等勢面與電勢梯度",
+    "youtube": "https://www.youtube.com/watch?v=w2MdrKixZ6I"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第8集]靜電平衡與導體上的電荷",
+    "youtube": "https://www.youtube.com/watch?v=JbAdPlBfTuw"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第9集]導體殼與靜電屏蔽",
+    "youtube": "https://www.youtube.com/watch?v=W20iK5xSDQU"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第10集]靜電能",
+    "youtube": "https://www.youtube.com/watch?v=_9Y0K4GPGTI"
   }
 ];
 

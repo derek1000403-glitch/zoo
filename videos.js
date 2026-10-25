@@ -250,6 +250,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第41集]等溫與絕熱過程",
     "youtube": "https://www.youtube.com/watch?v=lnnv5Jd9heA"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第42集]多方過程與大氣",
+    "youtube": "https://www.youtube.com/watch?v=rdE1eSV2erc"
   }
 ];
 

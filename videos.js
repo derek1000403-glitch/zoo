@@ -334,6 +334,18 @@ const VIDEOS = [
     "description": "",
     "title": "[第55集]非線性振動與混沌",
     "youtube": "https://www.youtube.com/watch?v=p7zrfnQgpwI"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第1集]電荷與庫侖定律",
+    "youtube": "https://www.youtube.com/watch?v=w6-ykEIydkU"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第2集]電場與電場線",
+    "youtube": "https://www.youtube.com/watch?v=2zLJ5uISx2I"
   }
 ];
 

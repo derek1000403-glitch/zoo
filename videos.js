@@ -604,6 +604,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第45集]三相交流電",
     "youtube": "https://www.youtube.com/watch?v=TbmCADtySiE"
+  },
+  {
+    "category": "第二期・電磁場",
+    "description": "",
+    "title": "[第二期第46集]位移電流",
+    "youtube": "https://www.youtube.com/watch?v=IgYw-GHwswA"
   }
 ];
 

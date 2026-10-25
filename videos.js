@@ -616,6 +616,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第47集]麥克斯韋方程組",
     "youtube": "https://www.youtube.com/watch?v=4AqWaM-_840"
+  },
+  {
+    "category": "第二期・電磁場",
+    "description": "",
+    "title": "[第二期第48集]平面電磁波",
+    "youtube": "https://www.youtube.com/watch?v=PFcOA3doUPY"
   }
 ];
 

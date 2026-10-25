@@ -538,6 +538,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第34集]電磁場的能量",
     "youtube": "https://www.youtube.com/watch?v=ZlSIJF_X2lw"
+  },
+  {
+    "category": "第二期・電路",
+    "description": "",
+    "title": "[第二期第35集]電源與電動勢",
+    "youtube": "https://www.youtube.com/watch?v=POs1ueGFR-I"
   }
 ];
 

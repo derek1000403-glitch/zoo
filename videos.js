@@ -532,6 +532,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第33集]邊界條件與磁路",
     "youtube": "https://www.youtube.com/watch?v=RJ6i84IUjig"
+  },
+  {
+    "category": "第二期・電磁介質",
+    "description": "",
+    "title": "[第二期第34集]電磁場的能量",
+    "youtube": "https://www.youtube.com/watch?v=ZlSIJF_X2lw"
   }
 ];
 

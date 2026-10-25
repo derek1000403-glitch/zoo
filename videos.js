@@ -634,6 +634,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第50集]動量與光壓",
     "youtube": "https://www.youtube.com/watch?v=WeozyXSV2qY"
+  },
+  {
+    "category": "第二期・電磁場",
+    "description": "",
+    "title": "[第二期第51集]赫茲實驗",
+    "youtube": "https://www.youtube.com/watch?v=iO5TBafK_KQ"
   }
 ];
 

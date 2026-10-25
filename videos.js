@@ -134,6 +134,36 @@ const VIDEOS = [
   {
     "category": "分析力學",
     "description": "",
+    "title": "[第22集]極座標",
+    "youtube": "https://www.youtube.com/watch?v=SyhgAjYErVA"
+  },
+  {
+    "category": "分析力學",
+    "description": "",
+    "title": "[第23集]極座標的加速度",
+    "youtube": "https://www.youtube.com/watch?v=e5QvU-tCZVU"
+  },
+  {
+    "category": "分析力學",
+    "description": "",
+    "title": "[第24集]角動量",
+    "youtube": "https://www.youtube.com/watch?v=Ss1x0_XkvYU"
+  },
+  {
+    "category": "分析力學",
+    "description": "",
+    "title": "[第25集]離心勢能",
+    "youtube": "https://www.youtube.com/watch?v=PmMa0Yius3M"
+  },
+  {
+    "category": "分析力學",
+    "description": "",
+    "title": "[第26集]開普勒定律",
+    "youtube": "https://www.youtube.com/watch?v=jjPygjvOiRs"
+  },
+  {
+    "category": "分析力學",
+    "description": "",
     "title": "[第27集]開普勒運動",
     "youtube": "https://www.youtube.com/watch?v=y1wFqPuxCbI"
   },
@@ -178,6 +208,30 @@ const VIDEOS = [
     "description": "",
     "title": "[第34集]理想氣體狀態方程",
     "youtube": "https://www.youtube.com/watch?v=9hx8lZqC_ZA"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第35集]壓強與溫度的微觀意義",
+    "youtube": "https://www.youtube.com/watch?v=JsH704FS9u0"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第36集]麥克斯韋速度分布",
+    "youtube": "https://www.youtube.com/watch?v=a6CCB5xN6yw"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第37集]玻耳茲曼分布",
+    "youtube": "https://www.youtube.com/watch?v=49VgRLPm03E"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第38集]能均分定理與熱容量",
+    "youtube": "https://www.youtube.com/watch?v=cYoNg8UHkys"
   }
 ];
 

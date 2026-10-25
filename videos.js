@@ -592,6 +592,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第43集]諧振電路",
     "youtube": "https://www.youtube.com/watch?v=_FJNXQxACY8"
+  },
+  {
+    "category": "第二期・電路",
+    "description": "",
+    "title": "[第二期第44集]變壓器",
+    "youtube": "https://www.youtube.com/watch?v=1_TpxT_GK1s"
   }
 ];
 

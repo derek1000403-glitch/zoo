@@ -652,6 +652,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第53集]電路能流",
     "youtube": "https://www.youtube.com/watch?v=LXLYAvStpgQ"
+  },
+  {
+    "category": "第二期・電磁場",
+    "description": "",
+    "title": "[第二期第54集]傳輸線",
+    "youtube": "https://www.youtube.com/watch?v=paG7M1XYW_I"
   }
 ];
 

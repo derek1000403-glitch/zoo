@@ -191,26 +191,20 @@ function unitInfo(name) {
 
 function cardStatus(v) {
   if (v.description) return esc(v.description);
-  if (isDone(v)) return `<span class="st-done">${CHECK}已看完</span>`;
-  const r = ratio(v);
-  if (r > 0) return `<span class="st-prog">看到 ${Math.round(r * 100)}%</span>`;
   return `第 ${playlists.get(v.category).indexOf(v) + 1} 集`;
 }
 
 function card(v, i) {
   const b = document.createElement("button");
-  const r = ratio(v);
-  b.className = "card" + (isDone(v) ? " is-done" : "");
+  b.className = "card";
   b.style.setProperty("--u", unitInfo(v.category).color);
-  b.setAttribute("aria-label", `${epLabel(v)} ${v.name}${isDone(v) ? "（看完了）" : ""}`);
+  b.setAttribute("aria-label", `${epLabel(v)} ${v.name}`);
   b.style.animationDelay = `${Math.min(i, 12) * 45}ms`;
   b.innerHTML = `
     <div class="thumb">
       <img loading="lazy" decoding="async" width="480" height="360" alt="" src="${thumb(v)}" onload="this.parentNode.classList.add('loaded')">
       <span class="ep">${esc(epLabel(v))}</span>
-      ${isDone(v) ? `<span class="done-badge">${CHECK}看完了</span>` : ""}
       <span class="play-btn"><span class="play-ico"></span></span>
-      ${r > 0 && r < 1 ? `<div class="bar"><i style="width:${r * 100}%"></i></div>` : ""}
     </div>
     <div class="card-body">
       <h3>${esc(v.name)}</h3>
@@ -449,7 +443,7 @@ function onStateChange(e) {
 async function load(v) {
   if (!ytReady) await ensureYouTube();
   if (current !== v) return; // 等待的時候已經換到別集了
-  const start = resumeAt(v);
+  const start = 0; // 一律從頭播放；有上次紀錄的話，吉祥物會問要不要跳過去
   if (ytReady) {
     if (!yt) {
       yt = new YT.Player("yt", {
@@ -466,7 +460,6 @@ async function load(v) {
     // YouTube 播放器程式還沒載入時，用一般的嵌入方式（無法自動接下一集）
     $("yt").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&start=${start}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   }
-  if (start > 0) toast(`從上次看到的 ${Math.floor(start / 60)}:${pad(start % 60)} 繼續播放`);
 }
 
 // 每幾秒記錄一次看到哪裡，看超過 90% 就算看完
@@ -476,6 +469,10 @@ function track() {
   const t = yt.getCurrentTime();
   const d = yt.getDuration();
   if (!d) return;
+  if (resumeOffer && resumeOffer.id === current.id && t < resumeOffer.t) {
+    buddyOnProgress(current, t, d);
+    return;
+  }
   progress.videos[current.id] = { ...rec(current), t, d };
   buddyOnProgress(current, t, d);
   if (t / d >= 0.9) markDone(current);
@@ -524,7 +521,12 @@ function updateListProgress() {
   bar.style.width = `${ratio(current) * 100}%`;
 }
 
+let resumeOffer = null; // { id, t }：這一集上次看到的位置
+
 function openPlayer(v) {
+  const resume = resumeAt(v);
+  const wasOpen = player.open;
+  resumeOffer = resume ? { id: v.id, t: resume } : null;
   current = v;
   progress.last = v.id;
   saveProgress();
@@ -549,7 +551,7 @@ function openPlayer(v) {
     player.showModal();
     clearInterval(timer);
     timer = setInterval(track, 3000);
-    buddyEnter();
+    buddyEnter(!!resume);
   } else {
     history.replaceState({ player: true }, "", `#v=${v.id}`);
     buddyNewEpisode();
@@ -557,6 +559,7 @@ function openPlayer(v) {
   load(v);
   countPlay();
   hideAsk();
+  if (resume) setTimeout(() => { if (player.open && current === v) askResume(v, resume); }, wasOpen ? 600 : 1500);
   updateSocialUI();
   refreshSocial(v);
   listEl.querySelector(".now").scrollIntoView({ block: "nearest" });
@@ -984,7 +987,7 @@ async function cheer() {
 }
 
 // 打開播放器：吉祥物從上面掉下來，站在影片上方
-async function buddyEnter() {
+async function buddyEnter(quiet = false) {
   nap(false);
   look("");
   buddyEl.classList.add("show");
@@ -999,7 +1002,7 @@ async function buddyEnter() {
     { transform: "translateY(-6px) scale(.94,1.08)", offset: 0.86 },
     { transform: "none" },
   ], { duration: 900, easing: "ease-in", delay: 150 }).finished.catch(() => {});
-  if (player.open) say(greeting(), 2400);
+  if (player.open && !quiet) say(greeting(), 2400);
   schedule(7000);
 }
 
@@ -1119,7 +1122,6 @@ const canSync = !!SITE.googleClientId;
 const social = { token: null, exp: 0, subscribed: null, subId: null, liked: {} };
 const askedFor = new Set(); // 這次已經拜託過的影片，不重複吵
 let declined = 0;
-let askVideo = null;
 let tokenClient = null;
 let tokenWaiter = null;
 
@@ -1322,19 +1324,13 @@ $("sub-btn").onclick = () => toggleSubscribe();
 // 看完一集後，吉祥物賣萌拜託按讚訂閱（每集只問一次，拒絕兩次就不再吵）
 const ask = $("ask");
 
-async function askSupport(v) {
-  if (!v || !player.open || askedFor.has(v.id) || declined >= 2) return;
-  await refreshSocial(v);
-  const needSub = !social.subscribed;
-  const needLike = !social.liked[v.id];
-  if (!needSub && !needLike) return say("謝謝你一直支持 ❤️", 2400);
-  askedFor.add(v.id);
-  askVideo = v;
-  ask.querySelector(".ask-text").textContent = needSub && needLike
-    ? "喜歡的話幫我按讚訂閱好不好～🥺"
-    : needSub ? "可以訂閱我嗎～🥺" : "這集喜歡嗎？幫我按個讚 🥺";
-  ask.querySelector('[data-a="like"]').hidden = !needLike;
-  ask.querySelector('[data-a="sub"]').hidden = !needSub;
+// 吉祥物走到左邊、舉手搖擺，旁邊跳出一個小詢問框
+let askButtons = [];
+
+async function showAsk(text, buttons, ms = 20000) {
+  ask.innerHTML = `<span class="ask-text">${esc(text)}</span>` +
+    buttons.map((btn, i) => `<button data-i="${i}" class="${btn.cls || "ask-btn"}">${esc(btn.label)}</button>`).join("");
+  askButtons = buttons;
   buddyEl.classList.remove("talking");
   buddy.busy = true;
   await walkTo(0);
@@ -1344,7 +1340,38 @@ async function askSupport(v) {
   lane.classList.add("asking");
   lane.scrollIntoView({ block: "nearest", behavior: "smooth" });
   clearTimeout(ask.timer);
-  ask.timer = setTimeout(hideAsk, 20000);
+  ask.timer = setTimeout(hideAsk, ms);
+}
+
+async function askSupport(v) {
+  if (!v || !player.open || askedFor.has(v.id) || declined >= 2 || lane.classList.contains("asking")) return;
+  await refreshSocial(v);
+  const needSub = !social.subscribed;
+  const needLike = !social.liked[v.id];
+  if (!needSub && !needLike) return say("謝謝你一直支持 ❤️", 2400);
+  askedFor.add(v.id);
+  showAsk(needSub && needLike ? "喜歡的話幫我按讚訂閱好不好～🥺" : needSub ? "可以訂閱我嗎～🥺" : "這集喜歡嗎？幫我按個讚 🥺", [
+    needLike && { label: "👍 按讚", onClick: () => toggleLike(v) },
+    needSub && { label: "🔔 訂閱", cls: "ask-btn ask-sub", onClick: () => toggleSubscribe() },
+    { label: "下次吧", cls: "ask-no", onClick: () => { declined++; say("好吧…下次再說 🥲", 2000); } },
+  ].filter(Boolean));
+}
+
+// 有上次的觀看紀錄：問要不要跳過去，選「是」才跳
+function askResume(v, t) {
+  const time = `${Math.floor(t / 60)}:${pad(t % 60)}`;
+  showAsk(`上次看到 ${time}，要跳過去嗎？`, [
+    { label: `▶ 跳到 ${time}`, cls: "ask-btn ask-sub", onClick: () => jumpTo(v, t) },
+    { label: "從頭看", cls: "ask-no", onClick: () => { resumeOffer = null; say("好～從頭開始！", 1600); } },
+  ], 15000);
+}
+
+function jumpTo(v, t) {
+  if (current !== v) return;
+  if (yt && yt.seekTo) yt.seekTo(t, true);
+  else $("yt").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&start=${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  hop(14, 360);
+  say("咻～跳過去了！", 1600);
 }
 
 function hideAsk() {
@@ -1357,16 +1384,11 @@ function hideAsk() {
 }
 
 ask.addEventListener("click", (e) => {
-  const a = e.target.closest("button") && e.target.closest("button").dataset.a;
-  if (!a) return;
-  const v = askVideo;
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  const choice = askButtons[btn.dataset.i];
   hideAsk();
-  if (a === "like") toggleLike(v);
-  else if (a === "sub") toggleSubscribe();
-  else {
-    declined++;
-    say("好吧…下次再說 🥲", 2000);
-  }
+  if (choice && choice.onClick) choice.onClick(); // 要在點擊的當下呼叫，Google 登入視窗才跳得出來
 });
 
 function thanks(text) {

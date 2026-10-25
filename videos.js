@@ -346,6 +346,24 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第2集]電場與電場線",
     "youtube": "https://www.youtube.com/watch?v=2zLJ5uISx2I"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第3集]連續分布電荷的電場",
+    "youtube": "https://www.youtube.com/watch?v=hvzjUoZoTTQ"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第4集]電通量與高斯定理",
+    "youtube": "https://www.youtube.com/watch?v=n7nMRUIWgvM"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第5集]高斯定理的應用",
+    "youtube": "https://www.youtube.com/watch?v=V4HuOlHxpFk"
   }
 ];
 

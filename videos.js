@@ -514,6 +514,24 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第30集]磁介質：分子電流",
     "youtube": "https://www.youtube.com/watch?v=K3HBu5XVftk"
+  },
+  {
+    "category": "第二期・電磁介質",
+    "description": "",
+    "title": "[第二期第31集]磁荷觀點與等效",
+    "youtube": "https://www.youtube.com/watch?v=GG8hRnmZyHM"
+  },
+  {
+    "category": "第二期・電磁介質",
+    "description": "",
+    "title": "[第二期第32集]鐵磁質與鐵電體",
+    "youtube": "https://www.youtube.com/watch?v=yBAOkcHEgQM"
+  },
+  {
+    "category": "第二期・電磁介質",
+    "description": "",
+    "title": "[第二期第33集]邊界條件與磁路",
+    "youtube": "https://www.youtube.com/watch?v=RJ6i84IUjig"
   }
 ];
 

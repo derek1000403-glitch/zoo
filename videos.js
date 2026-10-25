@@ -580,6 +580,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第41集]矢量圖與複數法",
     "youtube": "https://www.youtube.com/watch?v=vwwXJ4dl-6Y"
+  },
+  {
+    "category": "第二期・電路",
+    "description": "",
+    "title": "[第二期第42集]交流電的功率",
+    "youtube": "https://www.youtube.com/watch?v=PLwuK2fwLEc"
   }
 ];
 

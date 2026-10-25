@@ -586,6 +586,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第42集]交流電的功率",
     "youtube": "https://www.youtube.com/watch?v=PLwuK2fwLEc"
+  },
+  {
+    "category": "第二期・電路",
+    "description": "",
+    "title": "[第二期第43集]諧振電路",
+    "youtube": "https://www.youtube.com/watch?v=_FJNXQxACY8"
   }
 ];
 

@@ -274,6 +274,66 @@ const VIDEOS = [
     "description": "",
     "title": "[第45集]熵",
     "youtube": "https://www.youtube.com/watch?v=nyoPdl4KIT4"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第46集]熵增加原理",
+    "youtube": "https://www.youtube.com/watch?v=d-lmoLyplCk"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第47集]相變與克拉珀龍方程",
+    "youtube": "https://www.youtube.com/watch?v=7lyyCAkyjsA"
+  },
+  {
+    "category": "振盪",
+    "description": "",
+    "title": "[第48集]簡諧振動",
+    "youtube": "https://www.youtube.com/watch?v=_C_YX0QyqIQ"
+  },
+  {
+    "category": "振盪",
+    "description": "",
+    "title": "[第49集]簡正模",
+    "youtube": "https://www.youtube.com/watch?v=oOUeLaVio70"
+  },
+  {
+    "category": "振盪",
+    "description": "",
+    "title": "[第50集]阻尼振動",
+    "youtube": "https://www.youtube.com/watch?v=hSizAa8SjMs"
+  },
+  {
+    "category": "振盪",
+    "description": "",
+    "title": "[第51集]受迫振動",
+    "youtube": "https://www.youtube.com/watch?v=065pZ1LoRgE"
+  },
+  {
+    "category": "振盪",
+    "description": "",
+    "title": "[第52集]共振",
+    "youtube": "https://www.youtube.com/watch?v=ErU0TLlvkKY"
+  },
+  {
+    "category": "振盪",
+    "description": "",
+    "title": "[第53集]振動的合成",
+    "youtube": "https://www.youtube.com/watch?v=i2VY0l5Vu2U"
+  },
+  {
+    "category": "振盪",
+    "description": "",
+    "title": "[第54集]傅里葉分解",
+    "youtube": "https://www.youtube.com/watch?v=zh2_QRllhc8"
+  },
+  {
+    "category": "振盪",
+    "description": "",
+    "title": "[第55集]非線性振動與混沌",
+    "youtube": "https://www.youtube.com/watch?v=p7zrfnQgpwI"
   }
 ];
 

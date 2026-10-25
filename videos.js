@@ -640,6 +640,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第51集]赫茲實驗",
     "youtube": "https://www.youtube.com/watch?v=iO5TBafK_KQ"
+  },
+  {
+    "category": "第二期・電磁場",
+    "description": "",
+    "title": "[第二期第52集]電磁波譜",
+    "youtube": "https://www.youtube.com/watch?v=I3AirBA4DQM"
   }
 ];
 

@@ -664,6 +664,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第55集]單位制",
     "youtube": "https://www.youtube.com/watch?v=tH-a9aFUv5U"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第1集]光是什麼",
+    "youtube": "https://www.youtube.com/watch?v=Hym5bwQuSTk"
   }
 ];
 

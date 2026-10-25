@@ -568,6 +568,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第39集]LCR 暫態過程",
     "youtube": "https://www.youtube.com/watch?v=fsC_NGKRnBw"
+  },
+  {
+    "category": "第二期・電路",
+    "description": "",
+    "title": "[第二期第40集]交流電與交流元件",
+    "youtube": "https://www.youtube.com/watch?v=vPjxzdB_aj8"
   }
 ];
 

@@ -544,6 +544,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第35集]電源與電動勢",
     "youtube": "https://www.youtube.com/watch?v=POs1ueGFR-I"
+  },
+  {
+    "category": "第二期・電路",
+    "description": "",
+    "title": "[第二期第36集]導電機制",
+    "youtube": "https://www.youtube.com/watch?v=jgJ38tO_neM"
   }
 ];
 

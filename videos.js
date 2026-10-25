@@ -232,6 +232,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第38集]能均分定理與熱容量",
     "youtube": "https://www.youtube.com/watch?v=cYoNg8UHkys"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第39集]熱力學第一定律",
+    "youtube": "https://www.youtube.com/watch?v=zBZatqgAN-U"
   }
 ];
 

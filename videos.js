@@ -262,6 +262,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第43集]循環過程與卡諾循環",
     "youtube": "https://www.youtube.com/watch?v=__AyZayapD4"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第44集]熱力學第二定律",
+    "youtube": "https://www.youtube.com/watch?v=snCLDCCR16Y"
   }
 ];
 

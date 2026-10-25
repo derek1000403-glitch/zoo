@@ -332,7 +332,8 @@ function load(v) {
       yt = new YT.Player("yt", {
         videoId: v.id,
         host: "https://www.youtube-nocookie.com",
-        playerVars: { autoplay: 1, rel: 0, playsinline: 1, start },
+        // 能用網站自己的「放大」時，關掉 YouTube 內建的全螢幕，吉祥物才能一起放大
+        playerVars: { autoplay: 1, rel: 0, playsinline: 1, start, fs: canFullscreen ? 0 : 1 },
         events: { onStateChange },
       });
     } else {
@@ -423,6 +424,9 @@ function openPlayer(v) {
   }
   load(v);
   countPlay();
+  hideAsk();
+  updateSocialUI();
+  refreshSocial(v);
   listEl.querySelector(".now").scrollIntoView({ block: "nearest" });
 }
 
@@ -616,7 +620,8 @@ function buddyOnState(s) {
     buddy.napTimer = setTimeout(() => nap(true), 25000);
   } else if (s === YT.PlayerState.ENDED) {
     nap(false);
-    cheer();
+    const ended = current; // 自動播下一集後 current 會變，先記住剛看完的是哪一集
+    cheer().then(() => askSupport(ended));
   }
 }
 
@@ -657,6 +662,8 @@ function buddyLeave() {
   nap(false);
   buddyEl.classList.remove("show", "talking");
   lane.querySelectorAll(".lane-pixel").forEach((p) => p.remove());
+  hideAsk();
+  if (fullscreenEl()) exitFullscreen();
 }
 
 buddyEl.onclick = async () => {
@@ -683,10 +690,320 @@ player.addEventListener("mousemove", (e) => {
 
 addEventListener("resize", () => { if (player.open) place(buddy.x); });
 
+// ---------- 放大（吉祥物會跟著一起放大陪看） ----------
+
+const frameWrap = $("frame-wrap");
+const canFullscreen = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+const fullscreenEl = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+
+function exitFullscreen() {
+  (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+}
+
+function toggleFullscreen() {
+  if (fullscreenEl()) return exitFullscreen();
+  (frameWrap.requestFullscreen || frameWrap.webkitRequestFullscreen).call(frameWrap);
+}
+
+let fsExitedAt = 0;
+
+function onFullscreenChange() {
+  const on = fullscreenEl() === frameWrap;
+  if (!on) fsExitedAt = Date.now();
+  frameWrap.classList.toggle("is-fs", on);
+  $("fs-btn").querySelector("span").textContent = on ? "縮小" : "放大";
+  // 提示訊息跟著搬到看得到的地方
+  const box = $("toasts");
+  if (box.parentElement !== layer()) layer().appendChild(box);
+  requestAnimationFrame(() => place(buddy.x));
+  if (on && !buddy.busy && !reduceMotion) hop(22);
+}
+document.addEventListener("fullscreenchange", onFullscreenChange);
+document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+// 在放大畫面按 Esc 只縮小，不要連播放器一起關掉
+player.addEventListener("cancel", (e) => {
+  if (fullscreenEl()) {
+    e.preventDefault();
+    exitFullscreen();
+  } else if (Date.now() - fsExitedAt < 600) {
+    e.preventDefault();
+  }
+});
+$("fs-btn").onclick = toggleFullscreen;
+$("fs-exit").onclick = exitFullscreen;
+$("fs-btn").hidden = !canFullscreen;
+
+// ---------- 按讚、訂閱（登入 Google 後直接同步到 YouTube） ----------
+
+const YT_API = "https://www.googleapis.com/youtube/v3";
+const canSync = !!SITE.googleClientId;
+const social = { token: null, exp: 0, subscribed: null, subId: null, liked: {} };
+const askedFor = new Set(); // 這次已經拜託過的影片，不重複吵
+let declined = 0;
+let askVideo = null;
+let tokenClient = null;
+let tokenWaiter = null;
+
+try {
+  const saved = JSON.parse(sessionStorage.getItem("yt-token"));
+  if (saved && saved.exp > Date.now() + 60000) Object.assign(social, saved);
+} catch (e) {}
+
+const signedIn = () => !!social.token && social.exp > Date.now() + 30000;
+
+function initGoogle() {
+  if (!canSync || tokenClient || !(window.google && google.accounts && google.accounts.oauth2)) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: SITE.googleClientId,
+    scope: "https://www.googleapis.com/auth/youtube.force-ssl",
+    callback: (r) => {
+      const w = tokenWaiter;
+      tokenWaiter = null;
+      if (r.error || !r.access_token) return w && w.reject(r);
+      social.token = r.access_token;
+      social.exp = Date.now() + Number(r.expires_in || 3600) * 1000;
+      try { sessionStorage.setItem("yt-token", JSON.stringify({ token: social.token, exp: social.exp })); } catch (e) {}
+      updateAccountUI();
+      if (w) w.resolve();
+    },
+    error_callback: (err) => {
+      const w = tokenWaiter;
+      tokenWaiter = null;
+      if (w) w.reject(err);
+    },
+  });
+}
+window.onGoogleLibraryLoad = initGoogle;
+if (canSync) {
+  const s = document.createElement("script");
+  s.src = "https://accounts.google.com/gsi/client";
+  s.async = true;
+  s.onload = initGoogle;
+  document.head.appendChild(s);
+}
+
+// 一定要在按鈕被按下的當下呼叫，瀏覽器才會讓 Google 登入視窗跳出來
+function signIn() {
+  if (signedIn()) return Promise.resolve();
+  initGoogle();
+  if (!tokenClient) return Promise.reject({ type: "not_ready" });
+  return new Promise((resolve, reject) => {
+    tokenWaiter = { resolve, reject };
+    tokenClient.requestAccessToken({ prompt: "" });
+  });
+}
+
+function signOut() {
+  if (social.token && window.google) google.accounts.oauth2.revoke(social.token, () => {});
+  Object.assign(social, { token: null, exp: 0, subscribed: null, subId: null, liked: {} });
+  try { sessionStorage.removeItem("yt-token"); } catch (e) {}
+  updateAccountUI();
+  updateSocialUI();
+}
+
+async function ytApi(method, path, body) {
+  const r = await fetch(`${YT_API}/${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${social.token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (r.status === 401) {
+    signOut();
+    throw { reason: "expired" };
+  }
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    throw { reason: (j.error && j.error.errors && j.error.errors[0] && j.error.errors[0].reason) || String(r.status) };
+  }
+  return r.status === 204 ? null : r.json();
+}
+
+// 讀取這位觀眾目前有沒有按讚、有沒有訂閱
+async function refreshSocial(v) {
+  if (!canSync || !signedIn() || !v) return;
+  try {
+    const jobs = [];
+    if (social.liked[v.id] === undefined) {
+      jobs.push(ytApi("GET", `videos/getRating?id=${v.id}`).then((j) => {
+        social.liked[v.id] = !!(j.items && j.items[0] && j.items[0].rating === "like");
+      }));
+    }
+    if (social.subscribed === null) {
+      jobs.push(ytApi("GET", `subscriptions?part=id&mine=true&forChannelId=${SITE.channelId}`).then((j) => {
+        social.subId = (j.items && j.items[0] && j.items[0].id) || null;
+        social.subscribed = !!social.subId;
+      }));
+    }
+    await Promise.all(jobs);
+  } catch (e) {}
+  updateSocialUI();
+}
+
+function socialError(e) {
+  const r = (e && (e.reason || e.type || e.error)) || "";
+  if (r === "popup_closed" || r === "access_denied") return toast("登入沒有完成，想按讚訂閱時再按一次就好");
+  if (r === "popup_failed_to_open") return toast("登入視窗被瀏覽器擋住了，請允許彈出視窗後再試一次");
+  if (r === "quotaExceeded") return toast("今天網站的按讚次數用完了 😢 明天再來，或到 YouTube 按也可以");
+  if (r === "expired") return toast("登入過期了，請再按一次");
+  if (r === "not_ready") return toast("Google 登入還在載入，等一下再按一次");
+  toast("YouTube 暫時沒有回應，請稍後再試");
+}
+
+async function toggleLike(v = current) {
+  if (!canSync) return window.open(`https://www.youtube.com/watch?v=${v.id}`, "_blank", "noopener");
+  try {
+    await signIn();
+    if (social.liked[v.id] === undefined) await refreshSocial(v);
+    const like = !social.liked[v.id];
+    setBusy("like-btn", true);
+    await ytApi("POST", `videos/rate?id=${v.id}&rating=${like ? "like" : "none"}`);
+    social.liked[v.id] = like;
+    if (like) thanks("謝謝你的讚！❤️");
+  } catch (e) {
+    socialError(e);
+  } finally {
+    setBusy("like-btn", false);
+    updateSocialUI();
+  }
+}
+
+async function toggleSubscribe() {
+  if (!canSync) return window.open(`${SITE.channelUrl}?sub_confirmation=1`, "_blank", "noopener");
+  try {
+    await signIn();
+    if (social.subscribed === null) await refreshSocial(current);
+    setBusy("sub-btn", true);
+    if (social.subscribed) {
+      if (!confirm("確定要取消訂閱嗎？🥺")) return;
+      await ytApi("DELETE", `subscriptions?id=${social.subId}`);
+      social.subscribed = false;
+      social.subId = null;
+      say("嗚嗚…有空再回來喔 😢", 2400);
+    } else {
+      try {
+        const j = await ytApi("POST", "subscriptions?part=snippet", {
+          snippet: { resourceId: { kind: "youtube#channel", channelId: SITE.channelId } },
+        });
+        social.subId = j.id;
+      } catch (e) {
+        if (e.reason !== "subscriptionDuplicate") throw e;
+      }
+      social.subscribed = true;
+      thanks("耶！謝謝你訂閱 🎉");
+    }
+  } catch (e) {
+    socialError(e);
+  } finally {
+    setBusy("sub-btn", false);
+    updateSocialUI();
+  }
+}
+
+function setBusy(id, on) {
+  $(id).classList.toggle("busy", on);
+}
+
+function updateSocialUI() {
+  const v = current;
+  const liked = !!(v && social.liked[v.id]);
+  const like = $("like-btn");
+  like.classList.toggle("on", liked);
+  like.querySelector("span").textContent = liked ? "已按讚" : "按讚";
+  const sub = $("sub-btn");
+  sub.classList.toggle("on", !!social.subscribed);
+  sub.querySelector("span").textContent = social.subscribed ? "已訂閱" : "訂閱頻道";
+  $("soc-note").textContent = !canSync ? "會在 YouTube 開新分頁" : signedIn() ? "已連結你的 YouTube" : "第一次按會請你登入 Google";
+}
+
+function updateAccountUI() {
+  const b = $("account");
+  b.hidden = !canSync;
+  b.classList.toggle("on", signedIn());
+  b.innerHTML = signedIn()
+    ? `<span class="dot"></span>已連結 YouTube`
+    : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285f4"/><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34a853"/><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2z" fill="#fbbc04"/><path d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 5.9 12 5.9z" fill="#ea4335"/></svg>用 Google 登入`;
+}
+
+$("account").onclick = async () => {
+  if (signedIn()) {
+    if (confirm("要中斷和 YouTube 的連結嗎？（之後可以再登入）")) signOut();
+    return;
+  }
+  try {
+    await signIn();
+    toast("已連結你的 YouTube，按讚和訂閱會直接同步 ✨");
+    refreshSocial(current);
+  } catch (e) {
+    socialError(e);
+  }
+};
+$("like-btn").onclick = () => toggleLike();
+$("sub-btn").onclick = () => toggleSubscribe();
+
+// 看完一集後，吉祥物賣萌拜託按讚訂閱（每集只問一次，拒絕兩次就不再吵）
+const ask = $("ask");
+
+async function askSupport(v) {
+  if (!v || !player.open || askedFor.has(v.id) || declined >= 2) return;
+  await refreshSocial(v);
+  const needSub = !social.subscribed;
+  const needLike = !social.liked[v.id];
+  if (!needSub && !needLike) return say("謝謝你一直支持 ❤️", 2400);
+  askedFor.add(v.id);
+  askVideo = v;
+  ask.querySelector(".ask-text").textContent = needSub && needLike
+    ? "喜歡的話幫我按讚訂閱好不好～🥺"
+    : needSub ? "可以訂閱我嗎～🥺" : "這集喜歡嗎？幫我按個讚 🥺";
+  ask.querySelector('[data-a="like"]').hidden = !needLike;
+  ask.querySelector('[data-a="sub"]').hidden = !needSub;
+  buddyEl.classList.remove("talking");
+  buddy.busy = true;
+  await walkTo(0);
+  face(1);
+  look("look-c");
+  bsvg.classList.add("waving", "both", "begging");
+  lane.classList.add("asking");
+  lane.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  clearTimeout(ask.timer);
+  ask.timer = setTimeout(hideAsk, 20000);
+}
+
+function hideAsk() {
+  clearTimeout(ask.timer);
+  if (!lane.classList.contains("asking")) return;
+  lane.classList.remove("asking");
+  bsvg.classList.remove("waving", "both", "begging");
+  look("");
+  buddy.busy = false;
+}
+
+ask.addEventListener("click", (e) => {
+  const a = e.target.closest("button") && e.target.closest("button").dataset.a;
+  if (!a) return;
+  const v = askVideo;
+  hideAsk();
+  if (a === "like") toggleLike(v);
+  else if (a === "sub") toggleSubscribe();
+  else {
+    declined++;
+    say("好吧…下次再說 🥲", 2000);
+  }
+});
+
+function thanks(text) {
+  const r = buddyEl.getBoundingClientRect();
+  confetti(r.left + r.width / 2, r.top + r.height / 3, 30, 0.5);
+  say(text, 2600);
+  cheer();
+}
+
+updateAccountUI();
+updateSocialUI();
+
 // ---------- 提示訊息與慶祝 ----------
 
 // 播放器打開時，提示要放進播放器裡才不會被蓋住
-const layer = () => (player.open ? player : document.body);
+const layer = () => fullscreenEl() || (player.open ? player : document.body);
 
 function toast(html, { big = false, ms = 3200 } = {}) {
   const box = $("toasts");
@@ -782,6 +1099,7 @@ document.addEventListener("keydown", (e) => {
   if (player.open) {
     if (e.key === "n" || e.key === "N") step(1);
     if (e.key === "p" || e.key === "P") step(-1);
+    if ((e.key === "f" || e.key === "F") && canFullscreen) toggleFullscreen();
   } else if (e.key === "/") {
     e.preventDefault();
     search.focus();

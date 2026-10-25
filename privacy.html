@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07070a">
+  <title>隱私權政策</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=7">
+  <style>
+    .doc { max-width: 760px; margin: 0 auto; padding: 56px 24px 80px; }
+    .doc h1 { font-size: 2rem; font-weight: 900; margin: 0 0 6px; }
+    .doc h2 { font-size: 1.2rem; margin: 36px 0 10px; color: var(--orange-hi); }
+    .doc p, .doc li { color: #d6d2dc; line-height: 1.85; }
+    .doc ul { padding-left: 1.3em; }
+    .doc a { color: var(--orange-hi); }
+    .doc .muted { color: var(--muted); }
+    .back { display: inline-block; margin-bottom: 28px; color: var(--muted); text-decoration: none; }
+    .back:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+  <main class="doc">
+    <a class="back" href="./">← 回到網站</a>
+    <h1>隱私權政策</h1>
+    <p class="muted">適用網站：<span class="site-name"></span>（https://derek1000403-glitch.github.io/zoo/）<br>最後更新：2026 年 10 月 25 日</p>
+
+    <h2>一、本網站使用 YouTube API 服務</h2>
+    <p>本網站的影片透過 YouTube 播放，並使用 YouTube API 服務（YouTube API Services）讓你在網站內對影片按讚、訂閱頻道。使用這些功能，即表示你同意
+      <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube 服務條款</a>，並適用
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google 隱私權政策</a>。</p>
+
+    <h2>二、登入 Google 時我們會取得什麼</h2>
+    <p>只有在你主動按下「用 Google 登入」、「按讚」或「訂閱」時，網站才會請你登入 Google，並請求「管理你的 YouTube 帳戶」權限。這個權限<strong>只用在</strong>：</p>
+    <ul>
+      <li>查詢你是否已對目前這部影片按讚、是否已訂閱本頻道，用來顯示按鈕狀態；</li>
+      <li>在你按下按鈕時，替你對影片按讚／取消按讚、訂閱／取消訂閱本頻道。</li>
+    </ul>
+    <p>我們<strong>不會</strong>讀取你的姓名、電子郵件、觀看紀錄、其他訂閱或任何其他 YouTube 資料，也不會替你留言、上傳或做任何你沒有按下的動作。</p>
+
+    <h2>三、資料存放在哪裡</h2>
+    <ul>
+      <li><strong>Google 登入憑證：</strong>只暫存在你的瀏覽器（關閉分頁後清除），約一小時後自動失效。本網站沒有伺服器，不會把它傳送或儲存到任何其他地方。</li>
+      <li><strong>學習進度：</strong>你看到哪一集、看到第幾秒，只存在你自己的瀏覽器裡（localStorage），可以隨時在網站最下方按「清除學習紀錄」刪除。</li>
+      <li><strong>瀏覽次數：</strong>網站使用免費計數服務 Abacus（abacus.jasoncameron.dev）累計瀏覽與播放次數，只送出「多一次」的計數，不包含任何個人資料。</li>
+    </ul>
+
+    <h2>四、如何撤銷授權</h2>
+    <p>你可以隨時在網站右上角按「已連結 YouTube」中斷連結，或到
+      <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener">Google 帳戶的「第三方存取權」頁面</a>
+      移除本網站的存取權限。</p>
+
+    <h2>五、Cookie 與第三方內容</h2>
+    <p>本網站以 youtube-nocookie.com 嵌入影片，並使用 Google 字型與 Google 登入服務，這些第三方服務可能依其各自的政策使用 Cookie 或記錄技術資訊。</p>
+
+    <h2>六、聯絡我們</h2>
+    <p>對這份政策有任何問題，請聯絡：<span class="contact"></span></p>
+  </main>
+  <script src="videos.js?v=7"></script>
+  <script>
+    document.querySelectorAll(".site-name").forEach((e) => (e.textContent = SITE.name));
+    document.title = `隱私權政策｜${SITE.name}`;
+    const c = document.querySelector(".contact");
+    if (SITE.contact) {
+      const a = document.createElement("a");
+      a.href = `mailto:${SITE.contact}`;
+      a.textContent = SITE.contact;
+      c.appendChild(a);
+    } else {
+      const a = document.createElement("a");
+      a.href = SITE.channelUrl;
+      a.target = "_blank";
+      a.textContent = "YouTube 頻道「大川」";
+      c.appendChild(a);
+    }
+  </script>
+</body>
+</html>

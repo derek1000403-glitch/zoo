@@ -183,5 +183,16 @@ const VIDEOS = [
 
 const SITE = {
   name: "新時代物理學習平台",
-  tagline: "大川的物理學習頻道"
+  tagline: "大川的物理學習頻道",
+
+  // YouTube 頻道（網站裡的「訂閱」會訂閱這個頻道）
+  channelId: "UCVaLSPHwMhdmlF4t5GYh07w",
+  channelUrl: "https://www.youtube.com/@張大川-o3k",
+
+  // Google 登入用的「用戶端 ID」：照著 GOOGLE-SETUP.md 申請好之後，貼在下面的引號裡。
+  // 還沒貼之前，按讚／訂閱按鈕會改成開新分頁到 YouTube。
+  googleClientId: "",
+
+  // 聯絡信箱（會顯示在隱私權政策頁面，Google 審核需要）
+  contact: "",
 };

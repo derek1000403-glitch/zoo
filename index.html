@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <canvas id="stars" aria-hidden="true"></canvas>
@@ -25,6 +25,7 @@
         <input id="search" type="search" placeholder="搜尋影片" aria-label="搜尋影片" autocomplete="off">
         <kbd>/</kbd>
       </label>
+      <button id="account" class="account" hidden></button>
     </div>
   </header>
 
@@ -85,7 +86,11 @@
     <div class="footer-road" aria-hidden="true"><span id="walker" class="walker"></span></div>
     <div class="wrap footer-inner">
       <span id="footer-text"></span>
-      <button id="reset" class="link-btn">清除學習紀錄</button>
+      <span class="footer-links">
+        <a href="privacy.html">隱私權政策</a>
+        <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube 服務條款</a>
+        <button id="reset" class="link-btn">清除學習紀錄</button>
+      </span>
     </div>
   </footer>
 
@@ -104,9 +109,16 @@
     </div>
     <div class="player-body">
       <div class="player-main">
-        <div class="frame-wrap">
-          <div id="lane" class="lane" aria-hidden="true">
-            <div id="buddy" class="buddy" title="點我！">
+        <div id="frame-wrap" class="frame-wrap">
+          <div id="lane" class="lane">
+            <div id="ask" class="ask" role="dialog" aria-label="吉祥物的請求">
+              <span class="ask-text"></span>
+              <button data-a="like" class="ask-btn">👍 按讚</button>
+              <button data-a="sub" class="ask-btn ask-sub">🔔 訂閱</button>
+              <button data-a="no" class="ask-no" aria-label="下次吧">下次吧</button>
+            </div>
+            <button id="fs-exit" class="fs-exit">縮小 <kbd>Esc</kbd></button>
+            <div id="buddy" class="buddy" title="點我！" aria-hidden="true">
               <div class="buddy-hop"><div class="buddy-flip"></div></div>
               <div class="bubble"></div>
               <div class="zzz"><i>z</i><i>z</i><i>Z</i></div>
@@ -130,7 +142,22 @@
             <span class="track"><span class="thumb-dot"></span></span>
             自動播放下一集
           </label>
-          <span class="hint">快捷鍵 <kbd>P</kbd> 上一集 <kbd>N</kbd> 下一集</span>
+          <span class="hint">快捷鍵 <kbd>P</kbd> 上一集 <kbd>N</kbd> 下一集 <kbd>F</kbd> 放大</span>
+        </div>
+        <div class="social">
+          <button id="like-btn" class="soc-btn">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v11H3V10zM7 10l4-8c1.7 0 3 1.3 3 3v4h5.5a2 2 0 0 1 2 2.3l-1.4 8A2 2 0 0 1 18.1 21H7"/></svg>
+            <span>按讚</span>
+          </button>
+          <button id="sub-btn" class="soc-btn soc-sub">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+            <span>訂閱頻道</span>
+          </button>
+          <button id="fs-btn" class="soc-btn soc-fs" title="放大（吉祥物會一起陪你看）">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+            <span>放大</span>
+          </button>
+          <span id="soc-note" class="soc-note"></span>
         </div>
       </div>
       <aside class="player-list">
@@ -145,8 +172,8 @@
 
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
-  <script src="videos.js?v=5"></script>
-  <script src="app.js?v=6"></script>
+  <script src="videos.js?v=7"></script>
+  <script src="app.js?v=7"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

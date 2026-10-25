@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>教學影片</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1 id="site-name">教學影片</h1>
+      <p id="site-tagline" class="tagline"></p>
+      <input id="search" type="search" placeholder="搜尋影片…" aria-label="搜尋影片">
+      <nav id="categories" class="chips" aria-label="分類"></nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p id="empty" class="empty" hidden>找不到符合的影片。</p>
+    <div id="grid" class="grid"></div>
+  </main>
+
+  <dialog id="player">
+    <div class="player-box">
+      <button id="close" class="close" aria-label="關閉">✕</button>
+      <div class="frame"><iframe id="frame" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+      <h2 id="player-title"></h2>
+      <p id="player-desc"></p>
+    </div>
+  </dialog>
+
+  <footer class="wrap footer"></footer>
+
+  <script src="videos.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

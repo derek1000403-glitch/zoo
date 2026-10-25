@@ -394,6 +394,36 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第10集]靜電能",
     "youtube": "https://www.youtube.com/watch?v=_9Y0K4GPGTI"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第11集]電容與電容器",
+    "youtube": "https://www.youtube.com/watch?v=W0ePMyjDA4E"
+  },
+  {
+    "category": "第二期・靜電場",
+    "description": "",
+    "title": "[第二期第12集]唯一性定理與電像法",
+    "youtube": "https://www.youtube.com/watch?v=-dyjY2VmWJc"
+  },
+  {
+    "category": "第二期・恆定電流場",
+    "description": "",
+    "title": "[第二期第13集]恆定電流場",
+    "youtube": "https://www.youtube.com/watch?v=6WDrM17W5tk"
+  },
+  {
+    "category": "第二期・恆定電流場",
+    "description": "",
+    "title": "[第二期第14集]電流線的折射與電動勢",
+    "youtube": "https://www.youtube.com/watch?v=nq6P_9Nx_S0"
+  },
+  {
+    "category": "第二期・磁場",
+    "description": "",
+    "title": "[第二期第15集]磁的基本現象與安培定律",
+    "youtube": "https://www.youtube.com/watch?v=NAeRckSkPkU"
   }
 ];
 

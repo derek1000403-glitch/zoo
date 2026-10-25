@@ -256,6 +256,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第42集]多方過程與大氣",
     "youtube": "https://www.youtube.com/watch?v=rdE1eSV2erc"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第43集]循環過程與卡諾循環",
+    "youtube": "https://www.youtube.com/watch?v=__AyZayapD4"
   }
 ];
 

@@ -574,6 +574,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第40集]交流電與交流元件",
     "youtube": "https://www.youtube.com/watch?v=vPjxzdB_aj8"
+  },
+  {
+    "category": "第二期・電路",
+    "description": "",
+    "title": "[第二期第41集]矢量圖與複數法",
+    "youtube": "https://www.youtube.com/watch?v=vwwXJ4dl-6Y"
   }
 ];
 

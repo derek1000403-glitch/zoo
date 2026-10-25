@@ -478,6 +478,42 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第24集]動生與感生電動勢",
     "youtube": "https://www.youtube.com/watch?v=I_PuogjPMdw"
+  },
+  {
+    "category": "第二期・電磁感應",
+    "description": "",
+    "title": "[第二期第25集]磁矢勢與粒子動量",
+    "youtube": "https://www.youtube.com/watch?v=Yx3Pju6WjtA"
+  },
+  {
+    "category": "第二期・電磁感應",
+    "description": "",
+    "title": "[第二期第26集]電磁場的相對論變換",
+    "youtube": "https://www.youtube.com/watch?v=ci7UvEoxMWw"
+  },
+  {
+    "category": "第二期・電磁感應",
+    "description": "",
+    "title": "[第二期第27集]互感與自感",
+    "youtube": "https://www.youtube.com/watch?v=h2fwYMRICuU"
+  },
+  {
+    "category": "第二期・電磁介質",
+    "description": "",
+    "title": "[第二期第28集]電介質的極化",
+    "youtube": "https://www.youtube.com/watch?v=srGt4-Xeu1c"
+  },
+  {
+    "category": "第二期・電磁介質",
+    "description": "",
+    "title": "[第二期第29集]電位移與介電常量",
+    "youtube": "https://www.youtube.com/watch?v=2K4d4dg7C_8"
+  },
+  {
+    "category": "第二期・電磁介質",
+    "description": "",
+    "title": "[第二期第30集]磁介質：分子電流",
+    "youtube": "https://www.youtube.com/watch?v=K3HBu5XVftk"
   }
 ];
 

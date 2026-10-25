@@ -90,10 +90,10 @@ function renderHero() {
   $("site-name").textContent = SITE.name;
   $("site-tagline").textContent = SITE.tagline;
   $("footer-text").textContent = `© ${new Date().getFullYear()} ${SITE.name}`;
-  // 標題最後兩個字用橘色漸層
+  // 標題前三個字用橘色漸層，長標題分成兩行
   const name = SITE.name;
-  $("hero-title").innerHTML = name.length > 3
-    ? `${esc(name.slice(0, -2))}<span class="accent">${esc(name.slice(-2))}</span>`
+  $("hero-title").innerHTML = name.length > 6
+    ? `<span class="accent">${esc(name.slice(0, 3))}</span><br>${esc(name.slice(3))}`
     : esc(name);
 
   const done = doneCount(videos);

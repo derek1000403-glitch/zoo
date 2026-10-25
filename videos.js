@@ -182,6 +182,6 @@ const VIDEOS = [
 ];
 
 const SITE = {
-  name: "大川物奧教學",
-  tagline: "依集數學習物理奧林匹亞"
+  name: "新時代物理學習平台",
+  tagline: "大川的物理學習頻道"
 };

@@ -238,6 +238,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第39集]熱力學第一定律",
     "youtube": "https://www.youtube.com/watch?v=zBZatqgAN-U"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第40集]熱容量與焓",
+    "youtube": "https://www.youtube.com/watch?v=--Cjx4LUqdM"
   }
 ];
 

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>大川物奧教學</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <header class="site-header">
@@ -18,21 +18,33 @@
 
   <main class="wrap">
     <p id="empty" class="empty" hidden>找不到符合的影片。</p>
-    <div id="grid" class="grid"></div>
+    <div id="content"></div>
   </main>
 
   <dialog id="player">
     <div class="player-box">
       <button id="close" class="close" aria-label="關閉">✕</button>
-      <div class="frame"><iframe id="frame" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
-      <h2 id="player-title"></h2>
-      <p id="player-desc"></p>
+      <div class="player-main">
+        <div class="frame"><div id="yt"></div></div>
+        <h2 id="player-title"></h2>
+        <p id="player-desc"></p>
+        <div class="controls">
+          <button id="prev">⏮ 上一集</button>
+          <button id="next">下一集 ⏭</button>
+          <label class="auto"><input id="auto-next" type="checkbox" checked> 自動播放下一集</label>
+        </div>
+      </div>
+      <aside class="player-list">
+        <div class="pl-head"><strong id="playlist-name"></strong><span id="playlist-pos"></span></div>
+        <div id="playlist-items"></div>
+      </aside>
     </div>
   </dialog>
 
   <footer class="wrap footer"></footer>
 
-  <script src="videos.js?v=4473823"></script>
-  <script src="app.js"></script>
+  <script src="videos.js?v=2"></script>
+  <script src="app.js?v=2"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

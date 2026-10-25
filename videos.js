@@ -454,6 +454,30 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第20集]安培力與磁矩",
     "youtube": "https://www.youtube.com/watch?v=xS6PkTu95J8"
+  },
+  {
+    "category": "第二期・磁場",
+    "description": "",
+    "title": "[第二期第21集]洛倫茲力・粒子運動",
+    "youtube": "https://www.youtube.com/watch?v=Y7EFJFD1QVo"
+  },
+  {
+    "category": "第二期・磁場",
+    "description": "",
+    "title": "[第二期第22集]回旋・霍爾・磁約束",
+    "youtube": "https://www.youtube.com/watch?v=LBBNjfaqNbw"
+  },
+  {
+    "category": "第二期・電磁感應",
+    "description": "",
+    "title": "[第二期第23集]法拉第定律・楞次定律",
+    "youtube": "https://www.youtube.com/watch?v=ejl0c6GzSk8"
+  },
+  {
+    "category": "第二期・電磁感應",
+    "description": "",
+    "title": "[第二期第24集]動生與感生電動勢",
+    "youtube": "https://www.youtube.com/watch?v=I_PuogjPMdw"
   }
 ];
 

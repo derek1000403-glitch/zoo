@@ -424,6 +424,36 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第15集]磁的基本現象與安培定律",
     "youtube": "https://www.youtube.com/watch?v=NAeRckSkPkU"
+  },
+  {
+    "category": "第二期・磁場",
+    "description": "",
+    "title": "[第二期第16集]B 與畢奧-薩伐爾定律",
+    "youtube": "https://www.youtube.com/watch?v=QdscCeE81ZA"
+  },
+  {
+    "category": "第二期・磁場",
+    "description": "",
+    "title": "[第二期第17集]圓線圈與螺線管",
+    "youtube": "https://www.youtube.com/watch?v=u1Uo8e6zAzs"
+  },
+  {
+    "category": "第二期・磁場",
+    "description": "",
+    "title": "[第二期第18集]安培環路定理",
+    "youtube": "https://www.youtube.com/watch?v=hPlmeGP5gyE"
+  },
+  {
+    "category": "第二期・磁場",
+    "description": "",
+    "title": "[第二期第19集]高斯定理與磁矢勢",
+    "youtube": "https://www.youtube.com/watch?v=qiMlFtuTh50"
+  },
+  {
+    "category": "第二期・磁場",
+    "description": "",
+    "title": "[第二期第20集]安培力與磁矩",
+    "youtube": "https://www.youtube.com/watch?v=xS6PkTu95J8"
   }
 ];
 

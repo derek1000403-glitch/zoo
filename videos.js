@@ -562,6 +562,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第二期第38集]RC 與 LR 暫態",
     "youtube": "https://www.youtube.com/watch?v=RqE6eoSz-sQ"
+  },
+  {
+    "category": "第二期・電路",
+    "description": "",
+    "title": "[第二期第39集]LCR 暫態過程",
+    "youtube": "https://www.youtube.com/watch?v=fsC_NGKRnBw"
   }
 ];
 

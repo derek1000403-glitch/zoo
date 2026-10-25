@@ -143,15 +143,112 @@ function renderTabs() {
   }
 }
 
+// ---------- 單元的顏色、圖示 ----------
+
+const unitNames = [...playlists.keys()];
+const UNIT_COLORS = ["#ff9a62", "#ff5c8a", "#a78bfa", "#4cc9f0", "#7bd389", "#ffd166"];
+
+// 每個單元一個像素小圖示：# 主色、o 淡色、+ 白色
+const ICONS = [
+  // 衝刺中的小球（速度）
+  ["............", "............", "......####..", ".....######.", "oo..##+#####", "....#++#####",
+   "ooo.########", "....########", "oo...######.", "......####..", "............", "............"],
+  // 蘋果
+  [".....o......", "......o##...", "...######...", "..########..", ".##+#######.", ".#++#######.",
+   ".#+########.", ".##########.", ".##########.", "..########..", "...###.###..", "............"],
+  // 行星與軌道
+  ["............", "....oooo....", "..oo....oo..", ".o........o.", ".o...##...o+", "o...####...o",
+   "o...####...o", ".o...##...o.", "+o........o.", "..oo....oo..", "....oooo....", "............"],
+  // 火焰
+  [".....#......", ".....##.....", "....###.....", "....####.#..", "...#####.#..", "..#########.",
+   "..####+####.", ".####+++###.", ".###+++++##.", ".###+++++##.", "..###+++##..", "...######..."],
+  // 閃電
+  [".......####.", "......####..", ".....####...", "....####....", "...########.", "........##..",
+   ".......##...", "......##....", ".....##.....", "....##......", "...#........", "............"],
+  // 波
+  ["............", "............", "............", ".##......##.", "#..#....#..#", "....#..#....",
+   ".....##.....", "............", ".oo......oo.", "o..o....o..o", "....o..o....", ".....oo....."],
+];
+
+function pixelIcon(i, color) {
+  const rows = ICONS[i % ICONS.length];
+  const fill = { "#": color, o: color, "+": "#fff" };
+  let rects = "";
+  rows.forEach((row, y) => [...row].forEach((c, x) => {
+    if (fill[c]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill[c]}"${c === "o" ? ' opacity=".45"' : ""}/>`;
+  }));
+  return `<svg class="picon" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+}
+
+function unitInfo(name) {
+  const i = unitNames.indexOf(name);
+  const cfg = (typeof UNITS !== "undefined" && UNITS[name]) || {};
+  const color = cfg.color || UNIT_COLORS[i % UNIT_COLORS.length];
+  return { no: i + 1, color, desc: cfg.desc || "", icon: pixelIcon(i, color) };
+}
+
+// ---------- 學習地圖 ----------
+
+function goToUnit(name) {
+  if (search.value) search.value = "";
+  currentCategory = "全部";
+  renderTabs();
+  render();
+  const el = $(`unit-${unitInfo(name).no}`);
+  if (el) el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+}
+
+function renderMap() {
+  const track = $("map-track");
+  const next = nextUp().v;
+  const cur = next ? next.category : unitNames[0];
+  track.innerHTML = "";
+  for (const name of unitNames) {
+    const list = playlists.get(name);
+    const u = unitInfo(name);
+    const done = doneCount(list);
+    const complete = done === list.length;
+    const li = document.createElement("li");
+    li.className = "stop" + (name === cur ? " current" : "") + (complete ? " complete" : "");
+    li.style.setProperty("--u", u.color);
+    li.style.setProperty("--p", Math.round((done / list.length) * 100));
+    li.innerHTML = `
+      <button class="stop-btn" aria-label="${esc(name)}，已完成 ${done} / ${list.length} 集">
+        <span class="ring"><span class="tile">${u.icon}</span>${complete ? `<span class="stop-check">${CHECK}</span>` : ""}</span>
+        <span class="stop-no">UNIT ${pad(u.no)}</span>
+        <strong>${esc(name)}</strong>
+        <span class="stop-meta">${complete ? "全部完成" : `${done} / ${list.length} 集`}</span>
+      </button>
+      ${name === cur ? `<span class="stop-mascot">${mascot("bob")}<em>你在這裡</em></span>` : ""}`;
+    li.querySelector("button").onclick = () => goToUnit(name);
+    track.appendChild(li);
+  }
+  const all = doneCount(videos);
+  $("map-where").innerHTML = all === videos.length
+    ? `全部 <strong>${videos.length}</strong> 集都看完了，太強了！🏆`
+    : `已完成 <strong>${all}</strong> / ${videos.length} 集 · 下一站：<strong>${esc(cur)}</strong>`;
+}
+
+// ---------- 影片卡片與單元 ----------
+
+function cardStatus(v) {
+  if (v.description) return esc(v.description);
+  if (isDone(v)) return `<span class="st-done">${CHECK}已看完</span>`;
+  const r = ratio(v);
+  if (r > 0) return `<span class="st-prog">看到 ${Math.round(r * 100)}%</span>`;
+  return `第 ${playlists.get(v.category).indexOf(v) + 1} 集`;
+}
+
 function card(v, i) {
   const b = document.createElement("button");
   const r = ratio(v);
   b.className = "card" + (isDone(v) ? " is-done" : "");
+  b.style.setProperty("--u", unitInfo(v.category).color);
   b.setAttribute("aria-label", `${epLabel(v)} ${v.name}${isDone(v) ? "（看完了）" : ""}`);
-  b.style.animationDelay = `${Math.min(i, 12) * 40}ms`;
+  b.style.animationDelay = `${Math.min(i, 12) * 45}ms`;
   b.innerHTML = `
     <div class="thumb">
-      <img loading="lazy" decoding="async" width="480" height="360" alt="" src="${thumb(v)}">
+      <img loading="lazy" decoding="async" width="480" height="360" alt="" src="${thumb(v)}" onload="this.parentNode.classList.add('loaded')">
       <span class="ep">${esc(epLabel(v))}</span>
       ${isDone(v) ? `<span class="done-badge">${CHECK}看完了</span>` : ""}
       <span class="play-btn"><span class="play-ico"></span></span>
@@ -159,25 +256,31 @@ function card(v, i) {
     </div>
     <div class="card-body">
       <h3>${esc(v.name)}</h3>
-      <p>${esc(v.description || `${v.category} · 第 ${playlists.get(v.category).indexOf(v) + 1} 集`)}</p>
+      <p>${cardStatus(v)}</p>
     </div>`;
   b.onclick = () => launch(v, b.querySelector(".thumb"));
   return b;
 }
 
-function unitSection(name, list, n) {
+function unitSection(name, list) {
   const s = document.createElement("section");
+  const u = unitInfo(name);
   const done = doneCount(list);
-  s.className = "unit";
+  const pct = Math.round((done / list.length) * 100);
+  s.className = "unit reveal";
+  s.id = `unit-${u.no}`;
+  s.style.setProperty("--u", u.color);
   s.innerHTML = `
-    <div class="unit-head">
-      <div class="unit-no"><span><small>UNIT</small><br>${pad(n)}</span></div>
-      <h2>${esc(name)}</h2>
-      <button class="btn btn-ghost btn-sm play-unit"><span class="play-ico"></span>${done === list.length ? "重看這個單元" : done ? "繼續這個單元" : "播放這個單元"}</button>
-      <div class="unit-meta">
-        <span>${list.length} 集</span>
-        <div class="bar"><i style="width:${(done / list.length) * 100}%"></i></div>
-        <span>${done === list.length ? "全部完成 🎉" : `已完成 ${done}/${list.length}`}</span>
+    <div class="unit-banner">
+      <div class="unit-icon">${u.icon}</div>
+      <div class="unit-text">
+        <p class="unit-no">UNIT ${pad(u.no)} · ${list.length} 集</p>
+        <h2>${esc(name)}</h2>
+        ${u.desc ? `<p class="unit-desc">${esc(u.desc)}</p>` : ""}
+      </div>
+      <div class="unit-side">
+        <div class="ring-sm" style="--p:${pct}" title="已完成 ${done} / ${list.length} 集"><span>${pct}<small>%</small></span></div>
+        <button class="btn btn-ghost btn-sm play-unit"><span class="play-ico"></span>${done === list.length ? "重看單元" : done ? "繼續單元" : "播放單元"}</button>
       </div>
     </div>
     <div class="grid"></div>`;
@@ -212,15 +315,38 @@ function render() {
     content.append(head, grid);
     return;
   }
-  let n = 0;
   for (const [name, list] of playlists) {
-    n++;
-    if (currentCategory === "全部" || currentCategory === name) content.appendChild(unitSection(name, list, n));
+    if (currentCategory === "全部" || currentCategory === name) content.appendChild(unitSection(name, list));
   }
+  observeReveal();
 }
+
+// 捲到畫面裡才淡入
+const revealer = "IntersectionObserver" in window && !reduceMotion
+  ? new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (e.isIntersecting) {
+      e.target.classList.add("in");
+      revealer.unobserve(e.target);
+    }
+  }), { rootMargin: "0px 0px -8% 0px" })
+  : null;
+
+function observeReveal() {
+  document.querySelectorAll(".reveal:not(.in)").forEach((el) => (revealer ? revealer.observe(el) : el.classList.add("in")));
+}
+
+// 滑鼠在卡片上移動時，光暈跟著走
+document.addEventListener("pointermove", (e) => {
+  const c = e.target.closest && e.target.closest(".card");
+  if (!c) return;
+  const r = c.getBoundingClientRect();
+  c.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  c.style.setProperty("--my", `${e.clientY - r.top}px`);
+}, { passive: true });
 
 function refreshAll() {
   renderHero();
+  renderMap();
   render();
 }
 
@@ -451,6 +577,9 @@ function openPlayer(v) {
   $("crumb-ep").textContent = `${epLabel(v)} · ${i + 1}/${list.length}`;
   $("player-title").textContent = v.name;
   $("player-desc").textContent = v.description || "";
+  // 播放器背後透出這集縮圖的顏色（像 YouTube 的劇院氛圍光），強調色跟著單元走
+  $("ambient").style.backgroundImage = `url("${thumb(v)}")`;
+  player.style.setProperty("--u", unitInfo(v.category).color);
   $("prev").disabled = i === 0;
   $("next").disabled = i === list.length - 1;
   renderList();

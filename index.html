@@ -27,7 +27,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
   <canvas id="stars" aria-hidden="true"></canvas>
@@ -48,6 +48,18 @@
   </header>
 
   <section class="hero">
+    <div class="hero-bg" aria-hidden="true">
+      <div class="grid-floor"></div>
+      <svg class="arc" viewBox="0 0 1200 500" preserveAspectRatio="none">
+        <path id="arc-path" d="M-20 470 Q 420 -150 860 470" />
+        <circle r="5"><animateMotion dur="5.5s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#arc-path"/></animateMotion></circle>
+      </svg>
+      <span class="formula f1">v = dx/dt</span>
+      <span class="formula f2">F = ma</span>
+      <span class="formula f3">E = ½mv²</span>
+      <span class="formula f4">L = T − V</span>
+      <span class="formula f5">PV = nRT</span>
+    </div>
     <div class="shapes" aria-hidden="true">
       <svg class="shape s1" viewBox="0 0 40 40"><path d="M20 4 37 34H3Z"/></svg>
       <svg class="shape s2" viewBox="0 0 40 40"><circle cx="20" cy="20" r="16"/></svg>
@@ -71,6 +83,7 @@
       </div>
 
       <div class="hero-stage">
+        <div class="sun-clip" aria-hidden="true"><div class="sun"></div></div>
         <div class="glow" aria-hidden="true"></div>
         <div class="sign-wrap">
           <div class="pixels" aria-hidden="true"></div>
@@ -85,6 +98,17 @@
         <div class="road" aria-hidden="true"></div>
       </div>
     </div>
+  </section>
+
+  <section id="map" class="wrap map reveal" aria-labelledby="map-title">
+    <div class="map-head">
+      <div>
+        <p class="eyebrow">LEARNING MAP</p>
+        <h2 id="map-title">學習地圖</h2>
+      </div>
+      <p id="map-where" class="map-where"></p>
+    </div>
+    <div class="map-scroll"><ol id="map-track" class="map-track"></ol></div>
   </section>
 
   <main id="units" class="wrap">
@@ -113,6 +137,7 @@
   </footer>
 
   <dialog id="player" aria-label="影片播放">
+    <div id="ambient" class="ambient" aria-hidden="true"></div>
     <div class="player-top">
       <div class="crumb"><span id="crumb-unit" class="pill"></span><span id="crumb-ep" class="pixel-text"></span></div>
       <div class="player-actions">
@@ -190,7 +215,7 @@
 
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
-  <script src="videos.js?v=8"></script>
-  <script src="app.js?v=8"></script>
+  <script src="videos.js?v=9"></script>
+  <script src="app.js?v=9"></script>
 </body>
 </html>

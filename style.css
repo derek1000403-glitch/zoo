@@ -570,3 +570,20 @@ dialog::backdrop { background: rgba(0, 0, 0, .78); backdrop-filter: blur(10px); 
 }
 
 [hidden] { display: none !important; }
+
+/* ---------- 吉祥物的新動作與道具 ---------- */
+.arms-up .m-arm-l, .arms-up .m-arm-r { transform: translateY(-3px); }
+.mascot .m-arm-l, .mascot .m-arm-r { transition: transform .12s steps(1); }
+.tapping .m-legs-a { animation: step .3s steps(1) infinite; }
+.lane .prop { position: absolute; z-index: 2; transform-origin: 50% 100%; pointer-events: none; margin-left: -6px; }
+.prop svg { display: block; width: 100%; height: auto; }
+.prop.ball { width: 11px; margin-left: -5px; }
+.prop.apple { width: 13px; }
+.prop.book { width: 26px; margin-left: -13px; }
+.prop .mark { font-family: "Silkscreen", monospace; font-size: 16px; color: #ffd166; text-shadow: 0 2px 0 rgba(0, 0, 0, .4); }
+.prop .emo { display: block; font-size: 17px; line-height: 1; margin-left: -3px; animation: pop-in .35s var(--ease); }
+.prop .note { font-size: 15px; color: #ffb84d; font-weight: 900; }
+@keyframes pop-in { from { transform: scale(0); } }
+
+/* 播放影片時，背後的頁面不要跟著捲動 */
+html.lock { overflow: hidden; }

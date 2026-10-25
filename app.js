@@ -147,10 +147,11 @@ function card(v, i) {
   const b = document.createElement("button");
   const r = ratio(v);
   b.className = "card" + (isDone(v) ? " is-done" : "");
+  b.setAttribute("aria-label", `${epLabel(v)} ${v.name}${isDone(v) ? "（看完了）" : ""}`);
   b.style.animationDelay = `${Math.min(i, 12) * 40}ms`;
   b.innerHTML = `
     <div class="thumb">
-      <img loading="lazy" alt="" src="${thumb(v)}">
+      <img loading="lazy" decoding="async" width="480" height="360" alt="" src="${thumb(v)}">
       <span class="ep">${esc(epLabel(v))}</span>
       ${isDone(v) ? `<span class="done-badge">${CHECK}看完了</span>` : ""}
       <span class="play-btn"><span class="play-ico"></span></span>
@@ -313,19 +314,58 @@ let yt = null;
 let ytReady = false;
 let current = null;
 let timer = null;
-window.onYouTubeIframeAPIReady = () => { ytReady = true; };
+// YouTube 播放器程式不在一開始就載入，讓首頁開得比較快；
+// 首頁閒下來、或有人把滑鼠移到影片上時才偷偷先載好
+let ytLoading = null;
+const ytWaiters = [];
+window.onYouTubeIframeAPIReady = () => {
+  ytReady = true;
+  ytWaiters.splice(0).forEach((f) => f());
+};
 
-// 影片播完時：記為看完，並自動接著播放清單的下一集
+function loadYouTubeApi() {
+  if (ytLoading) return;
+  ytLoading = document.createElement("script");
+  ytLoading.src = "https://www.youtube.com/iframe_api";
+  document.head.appendChild(ytLoading);
+}
+
+function ensureYouTube(timeout = 3000) {
+  loadYouTubeApi();
+  if (ytReady) return Promise.resolve();
+  return new Promise((resolve) => {
+    ytWaiters.push(resolve);
+    setTimeout(resolve, timeout);
+  });
+}
+
+(window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(loadYouTubeApi, { timeout: 4000 });
+document.addEventListener("pointerover", (e) => { if (e.target.closest(".card, .sign, .btn")) loadYouTubeApi(); }, { passive: true });
+
+// 影片播完時：記為看完，並自動接著播放清單的下一集；整個單元看完就接下一個單元
 function onStateChange(e) {
   buddyOnState(e.data);
   if (e.data !== YT.PlayerState.ENDED || !current) return;
   markDone(current);
   const list = playlists.get(current.category);
-  if (current === list[list.length - 1]) celebrate(current.category);
-  else if (autoNext.checked) step(1);
+  if (current !== list[list.length - 1]) {
+    if (autoNext.checked) step(1);
+    return;
+  }
+  celebrate(current.category);
+  const units = [...playlists.values()];
+  const nextUnit = units[units.indexOf(list) + 1];
+  if (!nextUnit || !autoNext.checked) return;
+  const finished = current;
+  setTimeout(() => say(`下一個單元「${nextUnit[0].category}」出發！🚀`, 2600), 2000);
+  setTimeout(() => {
+    if (player.open && current === finished && autoNext.checked) openPlayer(nextUnit[0]);
+  }, 6000);
 }
 
-function load(v) {
+async function load(v) {
+  if (!ytReady) await ensureYouTube();
+  if (current !== v) return; // 等待的時候已經換到別集了
   const start = resumeAt(v);
   if (ytReady) {
     if (!yt) {
@@ -354,6 +394,7 @@ function track() {
   const d = yt.getDuration();
   if (!d) return;
   progress.videos[current.id] = { ...rec(current), t, d };
+  buddyOnProgress(current, t, d);
   if (t / d >= 0.9) markDone(current);
   else saveProgress();
   updateListProgress();
@@ -413,13 +454,18 @@ function openPlayer(v) {
   $("prev").disabled = i === 0;
   $("next").disabled = i === list.length - 1;
   renderList();
-  history.replaceState(null, "", `#v=${v.id}`);
   if (!player.open) {
+    // 多記一筆瀏覽紀錄：在手機上按「返回」只會關掉影片，不會離開網站
+    history.replaceState(null, "", location.pathname + location.search);
+    history.pushState({ player: true }, "", `#v=${v.id}`);
+    pushedHistory = true;
+    document.documentElement.classList.add("lock");
     player.showModal();
     clearInterval(timer);
     timer = setInterval(track, 3000);
     buddyEnter();
   } else {
+    history.replaceState({ player: true }, "", `#v=${v.id}`);
     buddyNewEpisode();
   }
   load(v);
@@ -436,15 +482,31 @@ function step(d) {
   if (next) openPlayer(next);
 }
 
+let pushedHistory = false;
+let closingFromBack = false;
+
 player.addEventListener("close", () => {
   track();
   clearInterval(timer);
   buddyLeave();
   if (yt && yt.stopVideo) yt.stopVideo();
   else $("yt").innerHTML = "";
-  history.replaceState(null, "", location.pathname + location.search);
+  document.documentElement.classList.remove("lock");
+  if (pushedHistory) {
+    pushedHistory = false;
+    if (!closingFromBack) history.back();
+  }
+  closingFromBack = false;
   refreshAll();
   comeBack();
+});
+
+// 按瀏覽器／手機的「返回」：關掉影片
+addEventListener("popstate", (e) => {
+  if (player.open && !(e.state && e.state.player)) {
+    closingFromBack = true;
+    player.close();
+  }
 });
 $("close").onclick = () => player.close();
 $("prev").onclick = () => step(-1);
@@ -469,7 +531,7 @@ const flipEl = buddyEl.querySelector(".buddy-flip");
 const bubble = buddyEl.querySelector(".bubble");
 flipEl.innerHTML = mascot();
 const bsvg = flipEl.querySelector("svg");
-const buddy = { x: 0, facing: -1, busy: false, sleeping: false, timer: null, napTimer: null };
+const buddy = { x: 0, facing: -1, busy: false, sleeping: false, timer: null, napTimer: null, waitTimer: null, lastId: null, lastT: null };
 
 const LINES = ["認真看喔 👀", "這段很重要！", "記得做筆記 ✍️", "物理好好玩～", "嗯嗯，原來如此", "我也在學！", "加油加油 💪", "看懂了嗎？", "這個公式好帥"];
 const POKES = ["嘿嘿 😆", "好癢！", "專心看影片啦～", "幹嘛戳我 🙈", "我在認真聽課耶"];
@@ -551,7 +613,7 @@ async function trip() {
   const lean = buddy.facing > 0 ? 24 : -24;
   await hopEl.animate([
     { transform: "none" },
-    { transform: `translateY(-11px) rotate(${lean}deg)`, offset: 0.18 },
+    { transform: `translateY(-13px) rotate(${lean}deg)`, offset: 0.18 },
     { transform: "scale(1.3,.5)", offset: 0.3 },
     { transform: "scale(1.3,.5)", offset: 0.75 },
     { transform: "translateY(-8px) scale(.95,1.08)", offset: 0.88 },
@@ -578,27 +640,216 @@ async function chasePixel() {
   p.remove();
 }
 
+// ---- 道具（像素小物件），都放在影片上方的小平台裡 ----
+
+const sprite = (w, h, body) => `<svg viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${body}</svg>`;
+const BALL = sprite(4, 4, '<path fill="#ffb84d" d="M1 0h2v1h1v2h-1v1h-2v-1h-1v-2h1z"/><rect x="1" y="1" width="1" height="1" fill="#fff3c4"/>');
+const APPLE = sprite(5, 6, '<rect x="2" width="1" height="1" fill="#6b3e1f"/><rect x="3" width="1" height="1" fill="#7bd389"/><path fill="#ff4d5e" d="M1 1h3v1h1v3h-1v1h-3v-1h-1v-3h1z"/><rect x="1" y="2" width="1" height="1" fill="#ffb3ba"/>');
+const BOOK = sprite(8, 5, '<rect width="8" height="5" fill="#7b4dff"/><rect x="1" width="3" height="4" fill="#fff"/><rect x="4" width="3" height="4" fill="#ece6f7"/><rect x="1" y="1" width="2" height="1" fill="#b9b1cc"/><rect x="5" y="1" width="2" height="1" fill="#b9b1cc"/><rect x="1" y="2" width="2" height="1" fill="#b9b1cc"/><rect x="5" y="2" width="1" height="1" fill="#b9b1cc"/>');
+
+const bw = () => buddyEl.offsetWidth;
+const headY = () => (buddyEl.offsetHeight * 10) / 11; // 吉祥物頭頂離平台的高度
+const centerX = () => buddy.x + bw() / 2;
+
+// x 是道具中心、y 是道具底部離平台的高度
+function prop(html, x, y, cls = "") {
+  const el = document.createElement("div");
+  el.className = `prop ${cls}`;
+  el.innerHTML = html;
+  el.style.left = `${x}px`;
+  el.style.bottom = `${y}px`;
+  lane.appendChild(el);
+  return el;
+}
+
+const anim = (el, frames, opts) => el.animate(frames, opts).finished.catch(() => {});
+
+// 把球往前丟，看它畫出拋物線，再跑過去撿
+async function throwBall() {
+  const dir = centerX() > lane.clientWidth / 2 ? -1 : 1;
+  face(dir);
+  const x0 = centerX() + dir * bw() * 0.45;
+  const room = dir > 0 ? lane.clientWidth - x0 - 50 : x0 - 50;
+  const dist = Math.max(40, Math.min(100 + Math.random() * 70, room));
+  const h0 = headY() * 0.45;
+  const b = prop(BALL, x0, h0, "ball");
+  await hop(5, 240);
+  const frames = [];
+  for (let i = 0; i <= 14; i++) {
+    const p = i / 14;
+    frames.push({ transform: `translate(${dir * dist * p}px, ${-4 * 28 * p * (1 - p) + p * h0}px)` });
+  }
+  say("拋體運動！", 1800);
+  await anim(b, frames, { duration: 820, fill: "forwards" });
+  await anim(b, [
+    { transform: `translate(${dir * dist}px, ${h0}px)` },
+    { transform: `translate(${dir * (dist + 16)}px, ${h0 - 10}px)` },
+    { transform: `translate(${dir * (dist + 28)}px, ${h0}px)` },
+  ], { duration: 360, fill: "forwards" });
+  await walkTo(x0 + dir * (dist + 28) - bw() / 2);
+  b.remove();
+  await hop(10, 300);
+}
+
+// 蘋果掉到頭上 → 靈光一閃
+async function newtonApple() {
+  const cx = centerX();
+  const top = lane.clientHeight + 6;
+  const a = prop(APPLE, cx, top, "apple");
+  const fall = top - headY();
+  await anim(a, [{ transform: "none" }, { transform: `translateY(${fall}px)` }], { duration: 480, easing: "cubic-bezier(.55,0,1,.45)", fill: "forwards" });
+  anim(hopEl, [{ transform: "none" }, { transform: "scale(1.16,.8)" }, { transform: "none" }], { duration: 260 });
+  const mark = prop('<b class="mark">!</b>', cx + bw() * 0.32, headY() + 2);
+  const side = buddy.facing > 0 ? -1 : 1;
+  await anim(a, [
+    { transform: `translateY(${fall}px)` },
+    { transform: `translate(${side * 20}px, ${fall - 12}px)` },
+    { transform: `translate(${side * 34}px, ${top}px)` },
+  ], { duration: 520, easing: "ease-in", fill: "forwards" });
+  await wait(350);
+  mark.remove();
+  const bulb = prop('<span class="emo">💡</span>', cx, headY() + 1, "bulb");
+  look("look-c");
+  await say("懂了！萬有引力！", 2200);
+  bulb.remove();
+  a.remove();
+  look("");
+}
+
+// 坐下來看書、點頭
+async function readBook() {
+  bsvg.classList.add("sitting");
+  const bk = prop(BOOK, centerX() + buddy.facing * bw() * 0.18, 2, "book");
+  say(pick(["做筆記中… ✍️", "複習一下 📖", "嗯…原來是這樣"]), 2200);
+  await anim(hopEl, [{ transform: "translateY(-2px)" }, { transform: "translateY(-2px) rotate(-3deg)" }, { transform: "translateY(-2px)" }, { transform: "translateY(-2px) rotate(3deg)" }, { transform: "translateY(-2px)" }], { duration: 1500, iterations: 2 });
+  bk.remove();
+  bsvg.classList.remove("sitting");
+}
+
+function floatNote() {
+  const n = prop(`<span class="note">${pick(["♪", "♫"])}</span>`, centerX() + (Math.random() * 30 - 15), headY());
+  anim(n, [{ transform: "none", opacity: 1 }, { transform: "translate(10px,-22px)", opacity: 0 }], { duration: 1200 }).then(() => n.remove());
+}
+
+async function dance() {
+  bsvg.classList.add("waving");
+  for (let i = 0; i < 8; i++) {
+    face(i % 2 ? 1 : -1);
+    bsvg.classList.toggle("both", i % 2 === 0);
+    if (i % 2 === 0) floatNote();
+    await hop(8, 300);
+  }
+  bsvg.classList.remove("waving", "both");
+}
+
+// 跳到半空中轉一圈（在空中轉完才落地，不會碰到影片）
+async function spin() {
+  hopEl.style.transformOrigin = "50% 50%";
+  await anim(hopEl, [
+    { transform: "none" },
+    { transform: "scale(1.1,.88)", offset: 0.12 },
+    { transform: "translateY(-26px)", offset: 0.35 },
+    { transform: "translateY(-28px) rotate(360deg)", offset: 0.75 },
+    { transform: "translateY(0) rotate(360deg)" },
+  ], { duration: 800, easing: "ease-in-out" });
+  hopEl.style.transformOrigin = "";
+}
+
+// 月球漫步：面向一邊、往反方向滑
+async function moonwalk() {
+  const target = Math.max(0, Math.min(maxX(), buddy.x + (buddy.x > maxX() / 2 ? -1 : 1) * 130));
+  const dir = target > buddy.x ? 1 : -1;
+  face(-dir);
+  bsvg.classList.add("walking");
+  say("月球漫步～", 1800);
+  const ms = Math.abs(target - buddy.x) * 14 + 300;
+  place(target, ms);
+  await wait(ms);
+  bsvg.classList.remove("walking");
+  face(dir);
+  await hop(10, 300);
+}
+
+async function stretch() {
+  bsvg.classList.add("arms-up");
+  say("伸個懶腰～", 1600);
+  await anim(hopEl, [{ transform: "none" }, { transform: "scale(.9,1.18)", offset: 0.4 }, { transform: "scale(.9,1.18)", offset: 0.7 }, { transform: "none" }], { duration: 1600, easing: "ease-in-out" });
+  bsvg.classList.remove("arms-up");
+}
+
+async function sneeze() {
+  for (const s of [1.06, 1.12]) {
+    await anim(hopEl, [{ transform: "none" }, { transform: `scale(${2 - s},${s})` }, { transform: "none" }], { duration: 420 });
+  }
+  anim(hopEl, [{ transform: "none" }, { transform: `translateX(${-buddy.facing * 8}px) scale(1.2,.82)`, offset: 0.3 }, { transform: "none" }], { duration: 520 });
+  const r = buddyEl.getBoundingClientRect();
+  confetti(r.left + r.width / 2 + buddy.facing * r.width * 0.5, r.top + r.height * 0.4, 8, 0.15);
+  await say("哈啾！", 1400);
+}
+
+// 身體往前傾，偷看下面的影片（以前腳為支點，不會碰到影片）
+async function peek() {
+  hopEl.style.transformOrigin = buddy.facing > 0 ? "100% 100%" : "0% 100%";
+  say("偷看一下 👀", 1800);
+  await anim(hopEl, [{ transform: "none" }, { transform: `rotate(${buddy.facing * 20}deg)`, offset: 0.25 }, { transform: `rotate(${buddy.facing * 20}deg)`, offset: 0.8 }, { transform: "none" }], { duration: 2200, easing: "ease-in-out" });
+  hopEl.style.transformOrigin = "";
+}
+
+async function exercise() {
+  say("運動時間！💪", 1800);
+  for (let i = 0; i < 4; i++) {
+    bsvg.classList.add("arms-up");
+    await hop(12, 320);
+    bsvg.classList.remove("arms-up");
+    await wait(120);
+  }
+}
+
+const ACTIONS = [
+  [() => walkTo(Math.random() * maxX()), 16],
+  [() => hop(), 5],
+  [() => wave(), 5],
+  [lookAround, 7],
+  [chasePixel, 6],
+  [trip, 4],
+  [() => sit(5000 + Math.random() * 5000), 5],
+  [() => say(pick(LINES)), 7],
+  [throwBall, 7],
+  [newtonApple, 5],
+  [readBook, 6],
+  [dance, 5],
+  [spin, 5],
+  [moonwalk, 4],
+  [stretch, 5],
+  [sneeze, 3],
+  [peek, 5],
+  [exercise, 4],
+];
+let lastAction = null;
+
+function pickAction() {
+  const pool = ACTIONS.filter(([f]) => f !== lastAction);
+  let r = Math.random() * pool.reduce((s, [, w]) => s + w, 0);
+  for (const [f, w] of pool) if ((r -= w) <= 0) return (lastAction = f);
+  return pool[0][0];
+}
+
 async function act() {
-  if (!player.open) return;
+  if (!player.open || document.hidden) return schedule();
   if (buddy.busy || buddy.sleeping) return schedule();
   buddy.busy = true;
-  const r = Math.random();
   try {
-    if (r < 0.3) await walkTo(Math.random() * maxX());
-    else if (r < 0.42) await hop();
-    else if (r < 0.52) await wave();
-    else if (r < 0.64) await lookAround();
-    else if (r < 0.73) await chasePixel();
-    else if (r < 0.8) await trip();
-    else if (r < 0.9) await sit(5000 + Math.random() * 5000);
-    else await say(pick(LINES));
+    await pickAction()();
   } finally {
+    lane.querySelectorAll(".prop").forEach((p) => p.remove());
+    hopEl.style.transformOrigin = "";
+    bsvg.classList.remove("sitting", "arms-up", "walking");
     buddy.busy = false;
     schedule();
   }
 }
 
-function schedule(ms = 9000 + Math.random() * 12000) {
+function schedule(ms = 6000 + Math.random() * 9000) {
   clearTimeout(buddy.timer);
   if (player.open && !reduceMotion) buddy.timer = setTimeout(act, ms);
 }
@@ -612,12 +863,27 @@ function nap(on) {
 // 依影片狀態反應：暫停太久會睡著，播放時醒來，播完會歡呼
 function buddyOnState(s) {
   clearTimeout(buddy.napTimer);
+  clearTimeout(buddy.waitTimer);
+  bsvg.classList.remove("tapping");
   if (s === YT.PlayerState.PLAYING && buddy.sleeping) {
     nap(false);
     hop();
     say("我醒了！", 1500);
   } else if (s === YT.PlayerState.PAUSED) {
     buddy.napTimer = setTimeout(() => nap(true), 25000);
+    // 暫停一下下就轉頭看你
+    buddy.waitTimer = setTimeout(() => {
+      if (buddy.busy || buddy.sleeping) return;
+      look("look-c");
+      if (Math.random() < 0.4) say(pick(["暫停一下～☕", "休息一下也好", "有問題嗎？🤔"]), 2200);
+    }, 1200);
+  } else if (s === YT.PlayerState.BUFFERING) {
+    // 載入很久的話，會不耐煩地踏腳
+    buddy.waitTimer = setTimeout(() => {
+      if (buddy.busy || buddy.sleeping) return;
+      bsvg.classList.add("tapping");
+      say("載入中…等一下下 ⏳", 2000);
+    }, 1800);
   } else if (s === YT.PlayerState.ENDED) {
     nap(false);
     const ended = current; // 自動播下一集後 current 會變，先記住剛看完的是哪一集
@@ -647,8 +913,33 @@ async function buddyEnter() {
     { transform: "translateY(-6px) scale(.94,1.08)", offset: 0.86 },
     { transform: "none" },
   ], { duration: 900, easing: "ease-in", delay: 150 }).finished.catch(() => {});
-  if (player.open) say("一起看吧！", 2000);
-  schedule(8000);
+  if (player.open) say(greeting(), 2400);
+  schedule(7000);
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h >= 23 || h < 5) return "這麼晚還在學，好用功！記得早點睡 😴";
+  if (h < 11) return "早安！一起學物理 ☀️";
+  if (h < 14) return "午安～吃飽了嗎？";
+  if (h < 18) return "一起看吧！";
+  return "晚安～今天也來學一點 🌙";
+}
+
+// 依照播放進度反應：倒回去重看、快轉跳過、看到一半
+function buddyOnProgress(v, t, d) {
+  const prev = buddy.lastId === v.id ? buddy.lastT : null;
+  buddy.lastId = v.id;
+  buddy.lastT = t;
+  if (buddy.busy || buddy.sleeping || prev == null) return;
+  if (t < prev - 5) say(pick(["再看一次！好認真 👍", "倒帶～這段很重要對吧"]), 2400);
+  else if (t > prev + 20) {
+    say(pick(["欸欸，跳過了喔 👀", "快轉！你很趕嗎？"]), 2400);
+    hop(10, 300);
+  } else if (prev / d < 0.5 && t / d >= 0.5) {
+    say("看一半了，加油！💪", 2400);
+    hop(12, 360);
+  }
 }
 
 function buddyNewEpisode() {
@@ -659,9 +950,11 @@ function buddyNewEpisode() {
 function buddyLeave() {
   clearTimeout(buddy.timer);
   clearTimeout(buddy.napTimer);
+  clearTimeout(buddy.waitTimer);
   nap(false);
   buddyEl.classList.remove("show", "talking");
-  lane.querySelectorAll(".lane-pixel").forEach((p) => p.remove());
+  bsvg.classList.remove("tapping");
+  lane.querySelectorAll(".lane-pixel, .prop").forEach((p) => p.remove());
   hideAsk();
   if (fullscreenEl()) exitFullscreen();
 }
@@ -1120,6 +1413,60 @@ heroMascot.onclick = () => {
   confetti(r.left + r.width / 2, r.top + r.height / 3, 26);
   setTimeout(() => { svg.classList.remove("jump"); svg.classList.add("bob"); }, 650);
 };
+// 首頁吉祥物自己會動：揮手、東張西望、伸懶腰、跳一下
+function heroIdle() {
+  setTimeout(heroIdle, 6000 + Math.random() * 7000);
+  if (reduceMotion || document.hidden || player.open || flying || away || !onScreen(heroMascot)) return;
+  const svg = heroMascot.querySelector("svg");
+  const r = Math.random();
+  if (r < 0.3) {
+    svg.classList.add("waving", "both");
+    setTimeout(() => svg.classList.remove("waving", "both"), 1500);
+  } else if (r < 0.55) {
+    ["look-r", "", "look-c", ""].forEach((c, i) => setTimeout(() => {
+      svg.classList.remove("look-r", "look-c");
+      if (c) svg.classList.add(c);
+    }, i * 450));
+  } else if (r < 0.75) {
+    svg.classList.add("arms-up");
+    setTimeout(() => svg.classList.remove("arms-up"), 1200);
+  } else {
+    heroMascot.onclick();
+  }
+}
+setTimeout(heroIdle, 4000);
+
+// 首頁吉祥物的眼睛跟著滑鼠
+let eyeFrame = 0;
+document.addEventListener("mousemove", (e) => {
+  if (player.open || eyeFrame) return;
+  eyeFrame = requestAnimationFrame(() => {
+    eyeFrame = 0;
+    for (const el of [heroMascot, $("brand-mascot")]) {
+      const svg = el.querySelector("svg");
+      const r = el.getBoundingClientRect();
+      const dx = e.clientX - (r.left + r.width / 2);
+      svg.classList.toggle("look-r", dx > 60);
+      svg.classList.toggle("look-c", Math.abs(dx) <= 60);
+    }
+  });
+}, { passive: true });
+
+// 頁尾的吉祥物偶爾停下來揮手
+const walker = $("walker");
+setInterval(() => {
+  if (reduceMotion || document.hidden || Math.random() < 0.5) return;
+  const svg = walker.querySelector("svg");
+  walker.style.animationPlayState = "paused";
+  svg.classList.remove("walking");
+  svg.classList.add("waving", "both");
+  setTimeout(() => {
+    svg.classList.remove("waving", "both");
+    svg.classList.add("walking");
+    walker.style.animationPlayState = "";
+  }, 1600);
+}, 9000);
+
 heroMascot.parentElement.querySelector(".pixels").innerHTML = Array.from({ length: 14 }, (_, i) =>
   `<i style="left:${(i * 37) % 100}%;top:${(i * 53) % 90}%;background:${COLORS[i % COLORS.length]};animation-delay:${(i * 0.31) % 2.2}s"></i>`).join("");
 

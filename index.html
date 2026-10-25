@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
   <canvas id="stars" aria-hidden="true"></canvas>
@@ -75,6 +75,13 @@
   </main>
 
   <footer class="footer">
+    <div class="wrap">
+      <dl class="site-stats">
+        <div><dd id="sv-total">—</dd><dt>總瀏覽次數</dt></div>
+        <div><dd id="sv-today">—</dd><dt>今日瀏覽</dt></div>
+        <div><dd id="sv-plays">—</dd><dt>影片播放次數</dt></div>
+      </dl>
+    </div>
     <div class="footer-road" aria-hidden="true"><span id="walker" class="walker"></span></div>
     <div class="wrap footer-inner">
       <span id="footer-text"></span>
@@ -139,7 +146,7 @@
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <script src="videos.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>

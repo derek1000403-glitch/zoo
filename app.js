@@ -422,6 +422,7 @@ function openPlayer(v) {
     buddyNewEpisode();
   }
   load(v);
+  countPlay();
   listEl.querySelector(".now").scrollIntoView({ block: "nearest" });
 }
 
@@ -716,6 +717,56 @@ function celebrate(unit) {
   toast(`恭喜完成「${esc(unit)}」！<small>${doneCount(videos)} / ${videos.length} 集已看完，繼續加油</small>`, { big: true, ms: 5000 });
 }
 
+// ---------- 瀏覽次數統計（用免費的 Abacus 計數服務，不需要註冊） ----------
+
+const COUNTER = "https://abacus.jasoncameron.dev";
+const COUNTER_NS = "derek1000403-zoo";
+const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Taipei" }).format(new Date());
+
+async function counter(action, key) {
+  try {
+    const r = await fetch(`${COUNTER}/${action}/${COUNTER_NS}/${key}`);
+    if (r.status === 404) return 0; // 還沒有人算過
+    if (!r.ok) return null;
+    return (await r.json()).value;
+  } catch (e) {
+    return null;
+  }
+}
+
+function showCount(id, n) {
+  const el = $(id);
+  if (n == null) return;
+  const from = Number(el.dataset.n || 0);
+  el.dataset.n = n;
+  if (reduceMotion || from === n) return (el.textContent = n.toLocaleString("zh-TW"));
+  const t0 = performance.now();
+  const tick = (t) => {
+    const p = Math.min(1, (t - t0) / 900);
+    el.textContent = Math.round(from + (n - from) * (1 - (1 - p) ** 3)).toLocaleString("zh-TW");
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// 同一個人這次來只算一次，重新整理不會一直加
+async function loadStats() {
+  let fresh = true;
+  try {
+    fresh = sessionStorage.getItem("counted") !== today;
+    sessionStorage.setItem("counted", today);
+  } catch (e) {}
+  const act = fresh ? "hit" : "get";
+  const [total, day, plays] = await Promise.all([counter(act, "visits"), counter(act, `day-${today}`), counter("get", "plays")]);
+  showCount("sv-total", total);
+  showCount("sv-today", day);
+  showCount("sv-plays", plays);
+}
+
+function countPlay() {
+  counter("hit", "plays").then((n) => showCount("sv-plays", n));
+}
+
 // ---------- 其他 ----------
 
 $("reset").onclick = () => {
@@ -776,6 +827,7 @@ addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(d
 
 renderTabs();
 refreshAll();
+loadStats();
 
 // 網址帶有 #v=影片代碼 時，直接打開那一集（分享連結用）
 function openFromHash() {

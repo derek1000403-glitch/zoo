@@ -300,6 +300,14 @@ main { padding-bottom: 40px; }
 
 /* ---------- 頁尾 ---------- */
 .footer { margin-top: 60px; }
+.site-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); margin: 0 0 8px; padding: 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+}
+.site-stats div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 22px 12px; }
+.site-stats div + div { border-left: 1px solid var(--border); }
+.site-stats dd { margin: 0; font-size: clamp(1.4rem, 3.5vw, 2rem); font-weight: 900; font-variant-numeric: tabular-nums; background: var(--sign); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.site-stats dt { color: var(--muted); font-size: .85rem; }
 .footer-road { position: relative; height: 70px; border-bottom: 1px solid var(--border); overflow: hidden; }
 .footer-road::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: 14px; height: 3px;

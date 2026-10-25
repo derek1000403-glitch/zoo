@@ -244,6 +244,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第40集]熱容量與焓",
     "youtube": "https://www.youtube.com/watch?v=--Cjx4LUqdM"
+  },
+  {
+    "category": "熱學",
+    "description": "",
+    "title": "[第41集]等溫與絕熱過程",
+    "youtube": "https://www.youtube.com/watch?v=lnnv5Jd9heA"
   }
 ];
 

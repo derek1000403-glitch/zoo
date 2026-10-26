@@ -706,6 +706,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第7集]成像",
     "youtube": "https://www.youtube.com/watch?v=4EKGr6XyrAU"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第8集]單球面折射",
+    "youtube": "https://www.youtube.com/watch?v=b-O3otmL8Yo"
   }
 ];
 

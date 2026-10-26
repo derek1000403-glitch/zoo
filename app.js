@@ -1724,7 +1724,6 @@ $("music-btn").onclick = () => {
 // 播放影片時：YouTube 不讓網站讀取影片的聲音，所以是依照「正在播放、音量大小」模擬說話的起伏。
 
 const vizTop = $("viz-top");
-const vizPlayer = $("viz-player");
 const speech = { pauseEnd: 0, phraseEnd: 0, level: 0 };
 let freqData = null;
 
@@ -1775,35 +1774,141 @@ function drawBars(canvas, values, color) {
   });
 }
 
+// ---- 螢幕四周的聲波光環 ----
+// 沿著整個畫面的四個邊排一圈短短的光條，跟著聲音往內跳動。
+const ring = document.createElement("canvas");
+ring.className = "edge-wave";
+ring.setAttribute("aria-hidden", "true");
+document.body.appendChild(ring);
+const ringCtx = ring.getContext("2d");
+let ringVals = [];
+let ringBlank = false;
+
+function sizeRing() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  ring.width = Math.round(innerWidth * dpr);
+  ring.height = Math.round(innerHeight * dpr);
+}
+sizeRing();
+addEventListener("resize", sizeRing);
+
+// 光環要放在最上層看得到的地方：一般在頁面上，播放時放進播放器，放大時放進放大畫面
+function placeRing() {
+  const host = fullscreenEl() || (player.open ? player : document.body);
+  if (ring.parentElement !== host) host.appendChild(ring);
+}
+
+// 依照沿著外框走的位置 u（0～1）算出每一條光條的高度
+function ringLevels(count, now) {
+  const out = new Array(count);
+  if (!player.open) {
+    if (!music.playing || !music.analyser) return out.fill(0);
+    freqData = freqData || new Uint8Array(music.analyser.frequencyBinCount);
+    music.analyser.getByteFrequencyData(freqData);
+    for (let i = 0; i < count; i++) {
+      const x = ((i / count) * 4) % 1;
+      const mid = 1 - Math.abs(2 * x - 1); // 每個邊的中間是低音（最有力），角落是高音
+      const bin = Math.floor(2 + (1 - mid) * 56);
+      out[i] = Math.min(1, Math.pow(freqData[bin] / 255, 1.3) * 1.25);
+    }
+    // 整圈都留一點亮度，角落才不會空空的
+    const avg = out.reduce((a, b) => a + b, 0) / count;
+    for (let i = 0; i < count; i++) out[i] = Math.max(out[i], avg * (0.55 + 0.25 * Math.sin(i * 0.9 + now / 400)));
+    return out;
+  }
+  const lv = speechLevel(now) * lessonVolume();
+  for (let i = 0; i < count; i++) {
+    const u = i / count;
+    const wave = 0.45 + 0.55 * Math.pow(Math.sin(u * Math.PI * 14 - now / 260), 2);
+    const jitter = 0.7 + 0.3 * Math.sin(now / 97 + i * 1.9);
+    out[i] = Math.min(1, lv * wave * jitter * 1.1);
+  }
+  return out;
+}
+
+function ringColor(u, a) {
+  if (player.open) {
+    const hex = getComputedStyle(player).getPropertyValue("--u").trim() || "#ff9a62";
+    const c = document.documentElement.dataset.theme === "light" ? inkColor(hex) : hex;
+    return { c, a };
+  }
+  // 首頁：沿著外框從粉紅、橘到金黃再回來，和招牌同一組顏色
+  const h = 340 + 55 * (0.5 - 0.5 * Math.cos(u * Math.PI * 4));
+  return { c: `hsl(${h % 360}, 95%, ${document.documentElement.dataset.theme === "light" ? 55 : 66}%)`, a };
+}
+
+function drawRing(now) {
+  placeRing();
+  const dpr = ring.width / innerWidth;
+  const W = ring.width;
+  const H = ring.height;
+  const gap = 13 * dpr;
+  const bw = 4 * dpr;
+  const maxLen = (innerWidth < 640 ? 16 : 30) * dpr;
+  const nx = Math.max(4, Math.floor(W / gap));
+  const ny = Math.max(4, Math.floor(H / gap));
+  const total = 2 * (nx + ny);
+  const target = ringLevels(total, now);
+  if (ringVals.length !== total) ringVals = new Array(total).fill(0);
+  let energy = 0;
+  for (let i = 0; i < total; i++) {
+    const t = target[i] || 0;
+    ringVals[i] += (t - ringVals[i]) * (t > ringVals[i] ? 0.5 : 0.12); // 上升快、下降慢，比較好看
+    energy += ringVals[i];
+  }
+  ringCtx.clearRect(0, 0, W, H);
+  if (energy < 0.02) return;
+  ringCtx.globalCompositeOperation = document.documentElement.dataset.theme === "light" ? "source-over" : "lighter";
+  // 依序走過上、右、下、左四個邊
+  const bars = [];
+  for (let i = 0; i < nx; i++) bars.push([(i + 0.5) * (W / nx), 0, 0, 1]);
+  for (let i = 0; i < ny; i++) bars.push([W, (i + 0.5) * (H / ny), -1, 0]);
+  for (let i = nx - 1; i >= 0; i--) bars.push([(i + 0.5) * (W / nx), H, 0, -1]);
+  for (let i = ny - 1; i >= 0; i--) bars.push([0, (i + 0.5) * (H / ny), 1, 0]);
+  bars.forEach(([x, y, dx, dy], i) => {
+    const v = ringVals[i];
+    if (v < 0.02) return;
+    const len = Math.max(bw, v * maxLen);
+    const { c } = ringColor(i / total);
+    const rx = dx ? (dx > 0 ? x : x - len) : x - bw / 2;
+    const ry = dy ? (dy > 0 ? y : y - len) : y - bw / 2;
+    const rw = dx ? len : bw;
+    const rh = dy ? len : bw;
+    ringCtx.fillStyle = c;
+    ringCtx.globalAlpha = 0.16 * Math.min(1, v * 1.5);
+    ringCtx.fillRect(rx - (dx ? 0 : bw), ry - (dy ? 0 : bw), rw + (dx ? 0 : bw * 2), rh + (dy ? 0 : bw * 2)); // 外圍的光暈
+    ringCtx.globalAlpha = 0.35 + 0.55 * Math.min(1, v * 1.4);
+    ringCtx.beginPath();
+    if (ringCtx.roundRect) ringCtx.roundRect(rx, ry, rw, rh, bw / 2);
+    else ringCtx.rect(rx, ry, rw, rh);
+    ringCtx.fill();
+  });
+  ringCtx.globalAlpha = 1;
+  ringCtx.globalCompositeOperation = "source-over";
+}
+
 function vizLoop(now) {
   requestAnimationFrame(vizLoop);
-  if (document.hidden || !settings.waves) return;
-  // 首頁右上角：背景音樂
+  if (document.hidden) return;
+  if (!settings.waves) {
+    if (!ringBlank) ringCtx.clearRect(0, 0, ring.width, ring.height);
+    ringBlank = true;
+    return;
+  }
+  ringBlank = false;
+  drawRing(now);
+  // 右上角音樂按鈕上的小聲波
   if (!player.open) {
     const n = 7;
     const vals = new Array(n).fill(0.12);
-    if (music.playing && music.analyser) {
-      freqData = freqData || new Uint8Array(music.analyser.frequencyBinCount);
-      music.analyser.getByteFrequencyData(freqData);
+    if (music.playing && freqData) {
       for (let i = 0; i < n; i++) {
         const bin = Math.floor(2 + Math.pow(i / n, 1.6) * 60);
         vals[i] = Math.max(0.12, Math.min(1, (freqData[bin] / 255) * 1.35));
       }
     }
     drawBars(vizTop, vals, ["#ff5c8a", "#ff8a55", "#ffb84d"]);
-    return;
   }
-  // 播放器：影片聲音（模擬）
-  const lv = speechLevel(now) * lessonVolume();
-  const n = 22;
-  const vals = [];
-  for (let i = 0; i < n; i++) {
-    const shape = 0.35 + 0.65 * Math.sin((i / (n - 1)) * Math.PI);
-    const jitter = 0.55 + 0.45 * Math.sin(now / 90 + i * 1.7) * Math.sin(now / 157 + i * 0.6);
-    vals.push(Math.max(0.08, Math.min(1, lv * shape * (0.6 + jitter * 0.7))));
-  }
-  const u = getComputedStyle(player).getPropertyValue("--u").trim() || "#ff9a62";
-  drawBars(vizPlayer, vals, document.documentElement.dataset.theme === "light" ? inkColor(u) : u);
 }
 requestAnimationFrame(vizLoop);
 

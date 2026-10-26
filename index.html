@@ -36,7 +36,7 @@
       document.documentElement.dataset.theme = t;
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
   <canvas id="stars" aria-hidden="true"></canvas>
@@ -109,7 +109,7 @@
         <span>聲波顯示</span>
         <label class="switch"><input id="set-waves" type="checkbox" aria-label="聲波顯示"><span class="track"><span class="thumb-dot"></span></span></label>
       </div>
-      <p class="set-note">右上角的音樂聲波，和播放影片時的聲波</p>
+      <p class="set-note">螢幕四周跟著聲音跳動的光環</p>
     </section>
 
     <section class="set-row">
@@ -204,7 +204,6 @@
     <div class="player-top">
       <div class="crumb">
         <span id="crumb-unit" class="pill"></span><span id="crumb-ep" class="pixel-text"></span>
-        <span class="wave-wrap" title="影片聲音（示意）"><canvas id="viz-player" width="280" height="56" aria-hidden="true"></canvas></span>
       </div>
       <div class="player-actions">
         <button id="share" class="icon-btn" title="複製這一集的連結">
@@ -277,6 +276,6 @@
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <script src="videos.js?v=9"></script>
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=16"></script>
 </body>
 </html>

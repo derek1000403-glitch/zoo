@@ -748,10 +748,9 @@ html.no-waves .music-btn.on .note-ico { display: block; color: var(--orange-hi);
 .vol svg { flex: none; width: 18px; height: 18px; fill: none; stroke: var(--muted); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 #vol-val { flex: none; width: 2.2em; text-align: right; font-variant-numeric: tabular-nums; font-size: .85rem; color: var(--muted); }
 
-/* 播放器上方的聲波 */
-.wave-wrap { display: inline-flex; align-items: center; margin-left: 4px; }
-#viz-player { width: 140px; height: 28px; }
-html.no-waves .wave-wrap { display: none; }
+/* 螢幕四周的聲波光環（不擋點擊） */
+.edge-wave { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 2500; pointer-events: none; }
+html.no-waves .edge-wave { display: none; }
 
 /* 吉祥物活潑程度調到「不動」 */
 html.mascot-still .mascot, html.mascot-still .mascot * { animation: none !important; transition: none !important; }
@@ -760,7 +759,6 @@ html.mascot-still .walker { animation: none; left: 24px; }
 @media (max-width: 640px) {
   .settings { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; max-height: calc(100vh - 80px); border-radius: 24px; }
   .tool-btn { width: 38px; height: 38px; }
-  #viz-player { width: 72px; }
 }
 
 /* =========================================================

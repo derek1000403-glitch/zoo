@@ -748,6 +748,30 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第14集]顯微鏡與望遠鏡",
     "youtube": "https://www.youtube.com/watch?v=i7HBu3MonZk"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第15集]光闌",
+    "youtube": "https://www.youtube.com/watch?v=7qEF0ILOYjk"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第16集]像差（一）",
+    "youtube": "https://www.youtube.com/watch?v=XTdEU9cVwUs"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第17集]像差（二）",
+    "youtube": "https://www.youtube.com/watch?v=zy23W31xEes"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第18集]亮度與照度",
+    "youtube": "https://www.youtube.com/watch?v=bIZObINvK6I"
   }
 ];
 

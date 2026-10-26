@@ -694,6 +694,18 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第5集]費馬原理",
     "youtube": "https://www.youtube.com/watch?v=oGEdWI0dy6Q"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第6集]光度學",
+    "youtube": "https://www.youtube.com/watch?v=qAevhZ5fGVw"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第7集]成像",
+    "youtube": "https://www.youtube.com/watch?v=4EKGr6XyrAU"
   }
 ];
 

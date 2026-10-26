@@ -682,6 +682,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第3集]棱鏡色散",
     "youtube": "https://www.youtube.com/watch?v=WD9AWH4agoo"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第4集]惠更斯原理",
+    "youtube": "https://www.youtube.com/watch?v=eU8PsjW51NA"
   }
 ];
 

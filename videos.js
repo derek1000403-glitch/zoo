@@ -718,6 +718,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第9集]逐次成像",
     "youtube": "https://www.youtube.com/watch?v=iDQCYoR_EhA"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第10集]薄透鏡",
+    "youtube": "https://www.youtube.com/watch?v=NC-CjBKaw0w"
   }
 ];
 

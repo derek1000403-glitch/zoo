@@ -724,6 +724,30 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第10集]薄透鏡",
     "youtube": "https://www.youtube.com/watch?v=NC-CjBKaw0w"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第11集]焦面與作圖",
+    "youtube": "https://www.youtube.com/watch?v=JOM2mNq3Fr4"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第12集]理想光具組",
+    "youtube": "https://www.youtube.com/watch?v=PqmOIk70JmU"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第13集]眼睛與放大鏡",
+    "youtube": "https://www.youtube.com/watch?v=QIyjQztlvB8"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第14集]顯微鏡與望遠鏡",
+    "youtube": "https://www.youtube.com/watch?v=i7HBu3MonZk"
   }
 ];
 

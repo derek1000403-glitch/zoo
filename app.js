@@ -65,7 +65,7 @@ function mascot(cls = "") {
   </svg>`;
 }
 
-// ---------- 學習進度（存在這台裝置的瀏覽器裡） ----------
+// ---------- 學習進度（存在這台裝置的瀏覽器裡；用 Google 登入後會同步到觀眾自己的 Google 帳號） ----------
 
 const STORE = "dachuan-progress-v1";
 let progress = { videos: {}, last: null, autoNext: true };
@@ -73,7 +73,9 @@ try { progress = { ...progress, ...JSON.parse(localStorage.getItem(STORE)) }; } 
 
 function saveProgress() {
   try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch (e) {}
+  if (cloudReady) scheduleCloudSave();
 }
+var cloudReady = false; // 下面 Google 登入的程式準備好之後才開始同步
 const rec = (v) => progress.videos[v.id] || {};
 const isDone = (v) => !!rec(v).done;
 const ratio = (v) => (isDone(v) ? 1 : rec(v).d ? Math.min(1, rec(v).t / rec(v).d) : 0);
@@ -140,10 +142,11 @@ function renderHero() {
 function renderTabs() {
   const tabs = $("categories");
   tabs.innerHTML = "";
-  for (const c of ["全部", ...playlists.keys()]) {
+  if (currentCategory === LIKED && !signedIn()) currentCategory = "全部";
+  for (const c of ["全部", ...(signedIn() ? [LIKED] : []), ...playlists.keys()]) {
     const b = document.createElement("button");
-    const n = c === "全部" ? videos.length : playlists.get(c).length;
-    b.innerHTML = `${esc(c)}<span class="n">${n}</span>`;
+    const n = c === "全部" ? videos.length : c === LIKED ? likedVideos().length : playlists.get(c).length;
+    b.innerHTML = `${c === LIKED ? "❤️ " : ""}${esc(c)}<span class="n">${n}</span>`;
     b.className = c === currentCategory ? "active" : "";
     b.onclick = () => {
       currentCategory = c;
@@ -312,8 +315,8 @@ function render() {
   content.innerHTML = "";
   empty.hidden = true;
   if (q) {
-    const list = videos.filter((v) =>
-      (currentCategory === "全部" || v.category === currentCategory) &&
+    const list = (currentCategory === LIKED ? likedVideos() : videos).filter((v) =>
+      (currentCategory === "全部" || currentCategory === LIKED || v.category === currentCategory) &&
       `${v.title} ${v.description || ""} ${v.category}`.toLowerCase().includes(q));
     if (!list.length) {
       empty.hidden = false;
@@ -329,10 +332,47 @@ function render() {
     content.append(head, grid);
     return;
   }
+  if (currentCategory === LIKED) {
+    content.appendChild(likedSection(likedVideos(), false));
+    observeReveal();
+    return;
+  }
+  if (currentCategory === "全部" && likedVideos().length) content.appendChild(likedSection(likedVideos(), true));
   for (const [name, list] of playlists) {
     if (currentCategory === "全部" || currentCategory === name) content.appendChild(unitSection(name, list));
   }
   observeReveal();
+}
+
+// ---------- 我喜歡的影片（用 Google 登入後，顯示在 YouTube 按過讚的本頻道影片） ----------
+
+const LIKED = "我喜歡的";
+const likedVideos = () => (signedIn() ? videos.filter((v) => social.liked[v.id]) : []);
+
+function likedSection(list, shelf) {
+  const s = document.createElement("section");
+  s.className = "unit liked reveal";
+  s.innerHTML = `
+    <div class="liked-head">
+      <h2>❤️ 我喜歡的影片</h2>
+      <span class="liked-sub">${list.length} 部 · 和你的 YouTube 按讚同步</span>
+      ${shelf ? `<button class="btn btn-ghost btn-sm see-all">全部看</button>` : ""}
+    </div>
+    ${list.length ? `<div class="${shelf ? "shelf" : "grid"}"></div>` : `<div class="liked-empty"><span class="em">${mascot("bob")}</span><p><strong>還沒有按讚的影片</strong>看影片時按「👍 按讚」，就會出現在這裡，也會同步到你的 YouTube。</p></div>`}`;
+  const box = s.querySelector(".shelf, .grid");
+  if (box) list.forEach((v, i) => {
+    // 喜歡的影片來自不同單元，所以多寫是哪個單元
+    const c = card(v, i);
+    c.querySelector(".card-body p").textContent = `${v.category} · 第 ${playlists.get(v.category).indexOf(v) + 1} 集`;
+    box.appendChild(c);
+  });
+  const all = s.querySelector(".see-all");
+  if (all) all.onclick = () => {
+    currentCategory = LIKED;
+    renderTabs();
+    render();
+  };
+  return s;
 }
 
 // 捲到畫面裡才淡入
@@ -602,6 +642,7 @@ function openPlayer(v) {
   resumeOffer = resume ? { id: v.id, t: resume } : null;
   current = v;
   progress.last = v.id;
+  progress.lastAt = Date.now();
   saveProgress();
   const list = playlists.get(v.category);
   const i = list.indexOf(v);
@@ -1210,7 +1251,7 @@ $("fs-btn").hidden = !canFullscreen;
 
 const YT_API = "https://www.googleapis.com/youtube/v3";
 const canSync = !!SITE.googleClientId;
-const social = { token: null, exp: 0, subscribed: null, subId: null, liked: {} };
+const social = { token: null, exp: 0, subscribed: null, subId: null, liked: {}, profile: null };
 const askedFor = new Set(); // 這次已經拜託過的影片，不重複吵
 let declined = 0;
 let tokenClient = null;
@@ -1227,15 +1268,16 @@ function initGoogle() {
   if (!canSync || tokenClient || !(window.google && google.accounts && google.accounts.oauth2)) return;
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: SITE.googleClientId,
-    scope: "https://www.googleapis.com/auth/youtube.force-ssl",
+    scope: "https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/drive.appdata openid email profile",
     callback: (r) => {
       const w = tokenWaiter;
       tokenWaiter = null;
       if (r.error || !r.access_token) return w && w.reject(r);
       social.token = r.access_token;
       social.exp = Date.now() + Number(r.expires_in || 3600) * 1000;
-      try { sessionStorage.setItem("yt-token", JSON.stringify({ token: social.token, exp: social.exp })); } catch (e) {}
+      saveSession();
       updateAccountUI();
+      afterSignIn();
       if (w) w.resolve();
     },
     error_callback: (err) => {
@@ -1267,10 +1309,116 @@ function signIn() {
 
 function signOut() {
   if (social.token && window.google) google.accounts.oauth2.revoke(social.token, () => {});
-  Object.assign(social, { token: null, exp: 0, subscribed: null, subId: null, liked: {} });
-  try { sessionStorage.removeItem("yt-token"); } catch (e) {}
+  Object.assign(social, { token: null, exp: 0, subscribed: null, subId: null, liked: {}, profile: null });
+  cloudFileId = null;
+  try {
+    sessionStorage.removeItem("yt-token");
+    localStorage.removeItem("was-signed-in");
+  } catch (e) {}
   updateAccountUI();
   updateSocialUI();
+  renderTabs();
+  render();
+}
+
+function saveSession() {
+  try { sessionStorage.setItem("yt-token", JSON.stringify({ token: social.token, exp: social.exp, profile: social.profile })); } catch (e) {}
+}
+
+// 登入成功後：抓名字頭像、找出按過讚的影片、同步學習進度
+async function afterSignIn() {
+  try { localStorage.setItem("was-signed-in", "1"); } catch (e) {}
+  await Promise.allSettled([fetchProfile(), loadLikes(), syncProgress()]);
+  updateAccountUI();
+  renderTabs();
+  refreshAll();
+  if (player.open && current) {
+    renderList();
+    refreshSocial(current);
+  }
+}
+
+async function fetchProfile() {
+  if (social.profile) return;
+  const r = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: `Bearer ${social.token}` } });
+  if (!r.ok) return;
+  const j = await r.json();
+  social.profile = { name: j.given_name || j.name || "", picture: j.picture || "" };
+  saveSession();
+}
+
+// 一次問 50 部影片有沒有按過讚（每次只用 1 點 YouTube 額度）
+async function loadLikes() {
+  const ids = videos.map((v) => v.id);
+  for (let i = 0; i < ids.length; i += 50) {
+    const j = await ytApi("GET", `videos/getRating?id=${ids.slice(i, i + 50).join(",")}`);
+    (j.items || []).forEach((it) => { social.liked[it.videoId] = it.rating === "like"; });
+  }
+}
+
+// ---------- 學習進度存到觀眾自己的 Google 雲端硬碟（網站專用的隱藏資料夾，別人看不到） ----------
+
+const DRIVE = "https://www.googleapis.com/drive/v3";
+const DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3";
+let cloudFileId = null;
+let cloudTimer = null;
+
+async function gfetch(url, opts = {}) {
+  const r = await fetch(url, { ...opts, headers: { Authorization: `Bearer ${social.token}`, ...(opts.headers || {}) } });
+  if (r.status === 401) {
+    signOut();
+    throw { reason: "expired" };
+  }
+  if (!r.ok) throw { reason: String(r.status) };
+  return r;
+}
+
+async function cloudLoad() {
+  const q = encodeURIComponent("name='progress.json'");
+  const list = await (await gfetch(`${DRIVE}/files?spaces=appDataFolder&q=${q}&fields=files(id)`)).json();
+  cloudFileId = (list.files && list.files[0] && list.files[0].id) || null;
+  return cloudFileId ? (await gfetch(`${DRIVE}/files/${cloudFileId}?alt=media`)).json() : null;
+}
+
+async function cloudSave() {
+  const body = JSON.stringify(progress);
+  if (cloudFileId) {
+    await gfetch(`${DRIVE_UPLOAD}/files/${cloudFileId}?uploadType=media`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body });
+    return;
+  }
+  const b = `b${Date.now()}`;
+  const meta = JSON.stringify({ name: "progress.json", parents: ["appDataFolder"] });
+  const multipart = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`;
+  const r = await gfetch(`${DRIVE_UPLOAD}/files?uploadType=multipart&fields=id`, { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${b}` }, body: multipart });
+  cloudFileId = (await r.json()).id;
+}
+
+// 兩邊的紀錄合在一起：看完的都算看完、看到的位置取比較後面的、「上次看到哪一集」取比較新的
+function mergeProgress(remote) {
+  if (!remote || !remote.videos) return;
+  for (const [id, r] of Object.entries(remote.videos)) {
+    const l = progress.videos[id] || {};
+    const m = { t: Math.max(l.t || 0, r.t || 0), d: Math.max(l.d || 0, r.d || 0) };
+    if (l.done || r.done) m.done = true;
+    progress.videos[id] = m;
+  }
+  if ((remote.lastAt || 0) > (progress.lastAt || 0)) {
+    progress.last = remote.last;
+    progress.lastAt = remote.lastAt;
+  }
+}
+
+async function syncProgress() {
+  if (!canSync || !signedIn()) return;
+  mergeProgress(await cloudLoad());
+  try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch (e) {}
+  await cloudSave();
+}
+
+function scheduleCloudSave() {
+  if (!canSync || !signedIn()) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(() => cloudSave().catch(() => {}), 5000);
 }
 
 async function ytApi(method, path, body) {
@@ -1313,7 +1461,7 @@ async function refreshSocial(v) {
 
 function socialError(e) {
   const r = (e && (e.reason || e.type || e.error)) || "";
-  if (r === "popup_closed" || r === "access_denied") return toast("登入沒有完成，想按讚訂閱時再按一次就好");
+  if (r === "popup_closed" || r === "access_denied") return toast("登入沒有完成，需要時再按一次就好");
   if (r === "popup_failed_to_open") return toast("登入視窗被瀏覽器擋住了，請允許彈出視窗後再試一次");
   if (r === "quotaExceeded") return toast("今天網站的按讚次數用完了 😢 明天再來，或到 YouTube 按也可以");
   if (r === "expired") return toast("登入過期了，請再按一次");
@@ -1387,24 +1535,34 @@ function updateSocialUI() {
   $("soc-note").textContent = !canSync ? "會在 YouTube 開新分頁" : signedIn() ? "已連結你的 YouTube" : "第一次按會請你登入 Google";
 }
 
+const GOOGLE_G = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285f4"/><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34a853"/><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2z" fill="#fbbc04"/><path d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 5.9 12 5.9z" fill="#ea4335"/></svg>`;
+
 function updateAccountUI() {
   const b = $("account");
   b.hidden = !canSync;
   b.classList.toggle("on", signedIn());
-  b.innerHTML = signedIn()
-    ? `<span class="dot"></span>已連結 YouTube`
-    : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.3z" fill="#4285f4"/><path d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z" fill="#34a853"/><path d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1a10 10 0 0 0 0 9.2z" fill="#fbbc04"/><path d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A10 10 0 0 0 3.1 7.4L6.4 10C7.2 7.7 9.4 5.9 12 5.9z" fill="#ea4335"/></svg>用 Google 登入`;
+  let was = false;
+  try { was = localStorage.getItem("was-signed-in") === "1"; } catch (e) {}
+  if (signedIn()) {
+    const p = social.profile || {};
+    b.title = "已登入：學習進度和按讚都會同步";
+    b.innerHTML = p.picture
+      ? `<img class="avatar" src="${esc(p.picture)}" alt="" referrerpolicy="no-referrer"><span class="acc-name">${esc(p.name || "已登入")}</span>`
+      : `<span class="dot"></span><span class="acc-name">${esc(p.name || "已登入")}</span>`;
+  } else {
+    b.title = "用 Google 登入，同步學習進度和按讚";
+    b.innerHTML = `${GOOGLE_G}<span class="acc-name">${was ? "重新登入" : "登入"}</span>`;
+  }
 }
 
 $("account").onclick = async () => {
   if (signedIn()) {
-    if (confirm("要中斷和 YouTube 的連結嗎？（之後可以再登入）")) signOut();
+    if (confirm("你的學習進度和按讚都已經同步到 Google 帳號。\n要登出嗎？")) signOut();
     return;
   }
   try {
     await signIn();
-    toast("已連結你的 YouTube，按讚和訂閱會直接同步 ✨");
-    refreshSocial(current);
+    toast("登入成功！學習進度和按讚會跟著你的 Google 帳號 ✨");
   } catch (e) {
     socialError(e);
   }
@@ -1494,6 +1652,8 @@ function thanks(text) {
 
 updateAccountUI();
 updateSocialUI();
+cloudReady = true;
+if (canSync && signedIn()) afterSignIn();
 
 // ---------- 提示訊息與慶祝 ----------
 

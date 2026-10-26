@@ -853,3 +853,38 @@ html.mascot-still .walker { animation: none; left: 24px; }
 
 /* 「放大」按鈕放在控制列最右邊（原本快捷鍵說明的位置） */
 .controls .soc-fs { margin-left: auto; }
+
+/* 「按讚」和「放大」一起放在控制列最右邊 */
+.controls #like-btn { margin-left: auto; }
+.controls .soc-fs { margin-left: 0; }
+
+/* 登入後的帳號按鈕：頭像＋名字 */
+.account .avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-left: -6px; }
+.account .acc-name { max-width: 7em; overflow: hidden; text-overflow: ellipsis; }
+.account.on { border-color: color-mix(in srgb, #40c882 45%, var(--border-strong)); }
+
+/* 我喜歡的影片 */
+.liked { margin-top: 44px; }
+.liked-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 18px; }
+.liked-head h2 { margin: 0; font-size: 1.6rem; font-weight: 900; }
+.liked-sub { color: var(--muted); font-size: .9rem; }
+.liked-head .see-all { margin-left: auto; }
+.shelf {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, 280px); gap: 20px;
+  overflow-x: auto; scroll-snap-type: x proximity; padding: 4px 4px 14px; margin: 0 -4px;
+  scrollbar-width: thin;
+}
+.shelf .card { scroll-snap-align: start; }
+.liked-empty { display: flex; align-items: center; gap: 18px; padding: 22px 24px; border: 1px dashed var(--border-strong); border-radius: 20px; color: var(--muted); }
+.liked-empty .em { width: 64px; flex: none; }
+.liked-empty strong { display: block; color: var(--text); margin-bottom: 2px; }
+.liked-empty p { margin: 0; }
+
+@media (max-width: 640px) {
+  .account .acc-name { display: none; }
+  .account .avatar { margin: 0; }
+  .shelf { grid-auto-columns: 78%; }
+}
+
+/* 提示訊息在手機上不要被擠成窄窄一條 */
+.toasts { width: max-content; max-width: calc(100vw - 32px); }

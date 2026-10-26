@@ -459,11 +459,10 @@ dialog::backdrop { background: rgba(0, 0, 0, .78); backdrop-filter: blur(10px); 
   .pl-row { grid-template-columns: 22px 104px 1fr; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-  .walker { display: none; }
-  html { scroll-behavior: auto; }
-}
+/* 觀眾在網站最下面按了「減少動畫」才會套用（不跟著裝置的省電／移除動畫設定，避免平板上整個網站都不會動） */
+html.calm *, html.calm *::before, html.calm *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+html.calm .walker { display: none; }
+html.calm { scroll-behavior: auto; }
 
 /* ---------- Google 登入、按讚、訂閱 ---------- */
 .topbar-inner { gap: 14px; }

@@ -30,7 +30,9 @@ const epLabel = (v) => `${v.phase ? v.phase + " · " : ""}${v.ep != null ? `EP $
 const thumb = (v, size = "hqdefault") => `https://i.ytimg.com/vi/${v.id}/${size}.jpg`;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
-const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// 「減少動畫」由觀眾自己在網站最下面切換（存在這台裝置的瀏覽器裡）
+const reduceMotion = (() => { try { return localStorage.getItem("calm-motion") === "1"; } catch (e) { return false; } })();
+document.documentElement.classList.toggle("calm", reduceMotion);
 const CHECK = `<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>`;
 const COLORS = ["#ff5c8a", "#ffb84d", "#6bcbff", "#7bd389", "#b388ff", "#ff9a62"];
 
@@ -1486,6 +1488,12 @@ function countPlay() {
 }
 
 // ---------- 其他 ----------
+
+$("calm").textContent = reduceMotion ? "開啟動畫" : "減少動畫";
+$("calm").onclick = () => {
+  try { localStorage.setItem("calm-motion", reduceMotion ? "0" : "1"); } catch (e) {}
+  location.reload();
+};
 
 $("reset").onclick = () => {
   if (!confirm("確定要清除這台裝置上的觀看紀錄嗎？")) return;

@@ -784,6 +784,24 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第20集]楊氏雙縫",
     "youtube": "https://www.youtube.com/watch?v=hIRsidUDqps"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第21集]空間相干性",
+    "youtube": "https://www.youtube.com/watch?v=2jYhffi3NMo"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第23集]薄膜的顏色",
+    "youtube": "https://www.youtube.com/watch?v=8QYz0k9NvwE"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第24集]等傾條紋",
+    "youtube": "https://www.youtube.com/watch?v=2SieI8lhyf8"
   }
 ];
 

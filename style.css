@@ -888,3 +888,24 @@ html.mascot-still .walker { animation: none; left: 24px; }
 
 /* 提示訊息在手機上不要被擠成窄窄一條 */
 .toasts { width: max-content; max-width: calc(100vw - 32px); }
+
+/* 背景音樂在等觀眾點一下才能開始（瀏覽器規定）：音樂按鈕輕輕閃動提示 */
+.music-btn.waiting { border-color: var(--orange); animation: music-wait 1.8s ease-in-out infinite; }
+@keyframes music-wait {
+  0% { box-shadow: 0 0 0 0 rgba(255, 138, 85, .55); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 138, 85, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 138, 85, 0); }
+}
+
+/* 播放器在內部用大尺寸運作（為了讓 YouTube 給高畫質），不能把外面的版面撐開 */
+.frame { position: relative; }
+.frame iframe { position: absolute; left: 0; top: 0; }
+.frame > #yt:not(iframe) { position: absolute; inset: 0; }
+@media (max-width: 960px) {
+  .player-body { grid-template-columns: minmax(0, 1fr); }
+}
+.ambient-clip { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }
+@media (max-width: 640px) {
+  .controls .switch { width: 100%; margin-left: 0; }
+  .controls #like-btn { margin-left: 0; }
+}

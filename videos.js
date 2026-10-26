@@ -781,5 +781,5 @@ const SITE = {
   googleClientId: "",
 
   // 聯絡信箱（會顯示在隱私權政策頁面，Google 審核需要）
-  contact: "",
+  contact: "derek1000403@gmail.com",
 };

@@ -552,6 +552,23 @@ function preferHighQuality() {
   } catch (e) {}
 }
 
+// YouTube 會依照「播放器有多大」決定畫質。
+// 讓播放器在裡面用接近 1920×1080 的大小運作，再縮小貼進畫面，YouTube 就會給比較高的畫質。
+// （縮小最多到 60%，不然 YouTube 自己的按鈕會太小）
+function fitPlayer() {
+  const frame = document.querySelector(".frame");
+  const iframe = frame && frame.querySelector("iframe");
+  if (!iframe || !frame.clientWidth) return;
+  const w = frame.clientWidth;
+  const h = frame.clientHeight;
+  const scale = Math.max(0.6, Math.min(1, w / 1920));
+  iframe.style.width = `${w / scale}px`;
+  iframe.style.height = `${h / scale}px`;
+  iframe.style.transformOrigin = "0 0";
+  iframe.style.transform = scale < 1 ? `scale(${scale})` : "";
+}
+if ("ResizeObserver" in window) new ResizeObserver(() => fitPlayer()).observe(document.querySelector(".frame"));
+
 async function load(v) {
   if (!ytReady) await ensureYouTube();
   if (current !== v) return; // 等待的時候已經換到別集了
@@ -564,7 +581,7 @@ async function load(v) {
         // 能用網站自己的「放大」時，關掉 YouTube 內建的全螢幕，吉祥物才能一起放大
         // vq：請 YouTube 用最高畫質（YouTube 不一定會照做，網路太慢時還是會自動調低）
         playerVars: { autoplay: 1, rel: 0, playsinline: 1, start, fs: canFullscreen ? 0 : 1, vq: "hd1080" },
-        events: { onStateChange },
+        events: { onStateChange, onReady: fitPlayer },
       });
     } else {
       yt.loadVideoById({ videoId: v.id, startSeconds: start, suggestedQuality: "hd1080" });
@@ -573,6 +590,7 @@ async function load(v) {
     // YouTube 播放器程式還沒載入時，用一般的嵌入方式（無法自動接下一集）
     $("yt").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&vq=hd1080&start=${start}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   }
+  fitPlayer();
 }
 
 // 每幾秒記錄一次看到哪裡，看超過 90% 就算看完
@@ -1222,6 +1240,7 @@ function toggleFullscreen() {
 let fsExitedAt = 0;
 
 function onFullscreenChange() {
+  requestAnimationFrame(fitPlayer);
   const on = fullscreenEl() === frameWrap;
   if (!on) fsExitedAt = Date.now();
   frameWrap.classList.toggle("is-fs", on);
@@ -1851,6 +1870,7 @@ function musicUpdate() {
     }, 1000);
   }
   $("music-btn").classList.toggle("on", settings.music && settings.volume > 0);
+  if (music.unlocked || !settings.music) $("music-btn").classList.remove("waiting");
 }
 
 function ramp(target, sec) {
@@ -1868,6 +1888,15 @@ const unlockMusic = () => {
   musicUpdate();
 };
 ["pointerdown", "touchend", "keydown"].forEach((ev) => addEventListener(ev, unlockMusic, { capture: true, passive: true }));
+
+// 有些瀏覽器（常來的網站）允許一進來就出聲，先試試看
+function tryAutoplayMusic() {
+  if (!settings.music || settings.volume === 0 || music.unlocked || !musicInit()) return;
+  music.ctx.resume().then(() => {
+    if (music.ctx.state === "running") unlockMusic();
+  }).catch(() => {});
+  setTimeout(() => $("music-btn").classList.toggle("waiting", !music.unlocked && settings.music && settings.volume > 0), 600);
+}
 document.addEventListener("visibilitychange", musicUpdate);
 
 $("music-btn").onclick = () => {
@@ -2167,6 +2196,7 @@ $("set-calm").onchange = (e) => {
 
 applyTheme();
 syncSettingsUI();
+tryAutoplayMusic();
 
 // ---------- 其他 ----------
 

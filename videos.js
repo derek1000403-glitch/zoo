@@ -826,6 +826,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第27集]多光束干涉",
     "youtube": "https://www.youtube.com/watch?v=4BJ8W-OJJ20"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第28集]光的衍射",
+    "youtube": "https://www.youtube.com/watch?v=5dufxj5jjLg"
   }
 ];
 

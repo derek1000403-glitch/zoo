@@ -772,6 +772,18 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第18集]亮度與照度",
     "youtube": "https://www.youtube.com/watch?v=bIZObINvK6I"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第19集]波的疊加",
+    "youtube": "https://www.youtube.com/watch?v=mSxTlqY8jG0"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第20集]楊氏雙縫",
+    "youtube": "https://www.youtube.com/watch?v=hIRsidUDqps"
   }
 ];
 

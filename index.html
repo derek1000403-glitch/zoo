@@ -36,7 +36,7 @@
       document.documentElement.dataset.theme = t;
     })();
   </script>
-  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
   <canvas id="stars" aria-hidden="true"></canvas>
@@ -245,7 +245,10 @@
             <span class="track"><span class="thumb-dot"></span></span>
             自動播放下一集
           </label>
-          <span class="hint">快捷鍵 <kbd>P</kbd> 上一集 <kbd>N</kbd> 下一集 <kbd>F</kbd> 放大</span>
+          <button id="fs-btn" class="soc-btn soc-fs" title="放大（吉祥物會一起陪你看）">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+            <span>放大</span>
+          </button>
         </div>
         <div class="social">
           <button id="like-btn" class="soc-btn">
@@ -255,10 +258,6 @@
           <button id="sub-btn" class="soc-btn soc-sub">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
             <span>訂閱頻道</span>
-          </button>
-          <button id="fs-btn" class="soc-btn soc-fs" title="放大（吉祥物會一起陪你看）">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-            <span>放大</span>
           </button>
           <span id="soc-note" class="soc-note"></span>
         </div>
@@ -276,6 +275,6 @@
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <script src="videos.js?v=9"></script>
-  <script src="app.js?v=16"></script>
+  <script src="app.js?v=18"></script>
 </body>
 </html>

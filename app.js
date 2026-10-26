@@ -1819,9 +1819,10 @@ function ringLevels(count, now) {
   const lv = speechLevel(now) * lessonVolume();
   for (let i = 0; i < count; i++) {
     const u = i / count;
-    const wave = 0.45 + 0.55 * Math.pow(Math.sin(u * Math.PI * 14 - now / 260), 2);
-    const jitter = 0.7 + 0.3 * Math.sin(now / 97 + i * 1.9);
-    out[i] = Math.min(1, lv * wave * jitter * 1.1);
+    // 平滑的波浪沿著外框慢慢流動
+    const wave = 0.4 + 0.6 * Math.pow(Math.sin(u * Math.PI * 8 - now / 420), 2);
+    const swell = 0.75 + 0.25 * Math.sin(u * Math.PI * 2 * 3 + now / 650);
+    out[i] = Math.min(1, lv * wave * swell);
   }
   return out;
 }
@@ -1837,54 +1838,67 @@ function ringColor(u, a) {
   return { c: `hsl(${h % 360}, 95%, ${document.documentElement.dataset.theme === "light" ? 55 : 66}%)`, a };
 }
 
+// 畫一圈貼著螢幕邊緣的細線，線會隨著聲音往內起伏
 function drawRing(now) {
   placeRing();
   const dpr = ring.width / innerWidth;
   const W = ring.width;
   const H = ring.height;
-  const gap = 13 * dpr;
-  const bw = 4 * dpr;
-  const maxLen = (innerWidth < 640 ? 16 : 30) * dpr;
-  const nx = Math.max(4, Math.floor(W / gap));
-  const ny = Math.max(4, Math.floor(H / gap));
+  const step = 7 * dpr;
+  const inset = 2 * dpr;
+  const amp = (innerWidth < 640 ? 7 : 12) * dpr;
+  const nx = Math.max(8, Math.floor(W / step));
+  const ny = Math.max(8, Math.floor(H / step));
   const total = 2 * (nx + ny);
   const target = ringLevels(total, now);
   if (ringVals.length !== total) ringVals = new Array(total).fill(0);
   let energy = 0;
   for (let i = 0; i < total; i++) {
     const t = target[i] || 0;
-    ringVals[i] += (t - ringVals[i]) * (t > ringVals[i] ? 0.5 : 0.12); // 上升快、下降慢，比較好看
+    ringVals[i] += (t - ringVals[i]) * (t > ringVals[i] ? 0.35 : 0.1);
     energy += ringVals[i];
   }
   ringCtx.clearRect(0, 0, W, H);
   if (energy < 0.02) return;
-  ringCtx.globalCompositeOperation = document.documentElement.dataset.theme === "light" ? "source-over" : "lighter";
-  // 依序走過上、右、下、左四個邊
-  const bars = [];
-  for (let i = 0; i < nx; i++) bars.push([(i + 0.5) * (W / nx), 0, 0, 1]);
-  for (let i = 0; i < ny; i++) bars.push([W, (i + 0.5) * (H / ny), -1, 0]);
-  for (let i = nx - 1; i >= 0; i--) bars.push([(i + 0.5) * (W / nx), H, 0, -1]);
-  for (let i = ny - 1; i >= 0; i--) bars.push([0, (i + 0.5) * (H / ny), 1, 0]);
-  bars.forEach(([x, y, dx, dy], i) => {
-    const v = ringVals[i];
-    if (v < 0.02) return;
-    const len = Math.max(bw, v * maxLen);
-    const { c } = ringColor(i / total);
-    const rx = dx ? (dx > 0 ? x : x - len) : x - bw / 2;
-    const ry = dy ? (dy > 0 ? y : y - len) : y - bw / 2;
-    const rw = dx ? len : bw;
-    const rh = dy ? len : bw;
-    ringCtx.fillStyle = c;
-    ringCtx.globalAlpha = 0.16 * Math.min(1, v * 1.5);
-    ringCtx.fillRect(rx - (dx ? 0 : bw), ry - (dy ? 0 : bw), rw + (dx ? 0 : bw * 2), rh + (dy ? 0 : bw * 2)); // 外圍的光暈
-    ringCtx.globalAlpha = 0.35 + 0.55 * Math.min(1, v * 1.4);
-    ringCtx.beginPath();
-    if (ringCtx.roundRect) ringCtx.roundRect(rx, ry, rw, rh, bw / 2);
-    else ringCtx.rect(rx, ry, rw, rh);
-    ringCtx.fill();
+  // 沿著上、右、下、左四個邊取點，每個點往畫面內推一點
+  const pts = [];
+  for (let i = 0; i < nx; i++) pts.push([(i / nx) * W, 0, 0, 1]);
+  for (let i = 0; i < ny; i++) pts.push([W, (i / ny) * H, -1, 0]);
+  for (let i = 0; i < nx; i++) pts.push([W - (i / nx) * W, H, 0, -1]);
+  for (let i = 0; i < ny; i++) pts.push([0, H - (i / ny) * H, 1, 0]);
+  const path = new Path2D();
+  pts.forEach(([x, y, dx, dy], i) => {
+    // 和左右鄰居平均一下，線條比較滑順
+    const at = (k) => ringVals[(i + k + total) % total];
+    const v = (at(-2) + 2 * at(-1) + 3 * at(0) + 2 * at(1) + at(2)) / 9;
+    const d = inset + v * amp;
+    const px = x + dx * d;
+    const py = y + dy * d;
+    if (i === 0) path.moveTo(px, py);
+    else path.lineTo(px, py);
   });
+  path.closePath();
+  const light = document.documentElement.dataset.theme === "light";
+  let stroke;
+  if (player.open) {
+    const hex = getComputedStyle(player).getPropertyValue("--u").trim() || "#ff9a62";
+    stroke = light ? inkColor(hex) : hex;
+  } else {
+    stroke = ringCtx.createLinearGradient(0, 0, W, H);
+    stroke.addColorStop(0, "#ff5c8a");
+    stroke.addColorStop(0.5, "#ff8a55");
+    stroke.addColorStop(1, "#ffb84d");
+  }
+  const strength = Math.min(1, (energy / total) * 3);
+  ringCtx.lineJoin = "round";
+  ringCtx.strokeStyle = stroke;
+  ringCtx.globalAlpha = 0.12 * strength + 0.04;
+  ringCtx.lineWidth = 5 * dpr;
+  ringCtx.stroke(path); // 淡淡的光暈
+  ringCtx.globalAlpha = 0.35 + 0.35 * strength;
+  ringCtx.lineWidth = 1.4 * dpr;
+  ringCtx.stroke(path);
   ringCtx.globalAlpha = 1;
-  ringCtx.globalCompositeOperation = "source-over";
 }
 
 function vizLoop(now) {

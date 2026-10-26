@@ -850,3 +850,6 @@ html.mascot-still .walker { animation: none; left: 24px; }
 @media (max-width: 640px) {
   #crumb-ep { display: none; }
 }
+
+/* 「放大」按鈕放在控制列最右邊（原本快捷鍵說明的位置） */
+.controls .soc-fs { margin-left: auto; }

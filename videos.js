@@ -676,6 +676,12 @@ const VIDEOS = [
     "description": "",
     "title": "[第三期第2集]三定律",
     "youtube": "https://www.youtube.com/watch?v=qv_k8VMuBlM"
+  },
+  {
+    "category": "第三期・光學",
+    "description": "",
+    "title": "[第三期第3集]棱鏡色散",
+    "youtube": "https://www.youtube.com/watch?v=WD9AWH4agoo"
   }
 ];
 

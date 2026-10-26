@@ -484,6 +484,7 @@ document.addEventListener("pointerover", (e) => { if (e.target.closest(".card, .
 // 影片播完時：記為看完，並自動接著播放清單的下一集；整個單元看完就接下一個單元
 function onStateChange(e) {
   buddyOnState(e.data);
+  if (e.data === YT.PlayerState.PLAYING) preferHighQuality();
   if (e.data !== YT.PlayerState.ENDED || !current) return;
   markDone(current);
   const list = playlists.get(current.category);
@@ -502,6 +503,15 @@ function onStateChange(e) {
   }, 6000);
 }
 
+// 每次開始播放都再請 YouTube 用最高畫質一次
+function preferHighQuality() {
+  try {
+    const levels = (yt.getAvailableQualityLevels && yt.getAvailableQualityLevels()) || [];
+    const best = levels.find((q) => q !== "auto") || "hd1080";
+    if (yt.setPlaybackQuality && yt.getPlaybackQuality && yt.getPlaybackQuality() !== best) yt.setPlaybackQuality(best);
+  } catch (e) {}
+}
+
 async function load(v) {
   if (!ytReady) await ensureYouTube();
   if (current !== v) return; // 等待的時候已經換到別集了
@@ -512,15 +522,16 @@ async function load(v) {
         videoId: v.id,
         host: "https://www.youtube-nocookie.com",
         // 能用網站自己的「放大」時，關掉 YouTube 內建的全螢幕，吉祥物才能一起放大
-        playerVars: { autoplay: 1, rel: 0, playsinline: 1, start, fs: canFullscreen ? 0 : 1 },
+        // vq：請 YouTube 用最高畫質（YouTube 不一定會照做，網路太慢時還是會自動調低）
+        playerVars: { autoplay: 1, rel: 0, playsinline: 1, start, fs: canFullscreen ? 0 : 1, vq: "hd1080" },
         events: { onStateChange },
       });
     } else {
-      yt.loadVideoById({ videoId: v.id, startSeconds: start });
+      yt.loadVideoById({ videoId: v.id, startSeconds: start, suggestedQuality: "hd1080" });
     }
   } else {
     // YouTube 播放器程式還沒載入時，用一般的嵌入方式（無法自動接下一集）
-    $("yt").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&start=${start}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    $("yt").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&vq=hd1080&start=${start}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   }
 }
 
@@ -1452,7 +1463,7 @@ function askResume(v, t) {
 function jumpTo(v, t) {
   if (current !== v) return;
   if (yt && yt.seekTo) yt.seekTo(t, true);
-  else $("yt").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&start=${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  else $("yt").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&vq=hd1080&start=${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   if (!still()) hop(14, 360);
   say("咻～跳過去了！", 1600);
 }

@@ -817,12 +817,6 @@ const VIDEOS = [
   },
   {
     "category": "第三期・光學",
-    "description": "本影片含 AI 生成動畫、音樂與內容。\n\n【02:05–02:27 勘誤】\n本段口白、字幕及公式卡文字需更正：\n矩形線型的襯比度 γ 只在光程差從 0 增加到第一個零點時單調下降；之後會再次上升，形成峰值逐漸降低的旁瓣。因此，片中「最大光程差」應理解為「襯比度第一次降為零的光程差」，並非超過後就完全沒有干涉。其值為 ΔL₀ = 2π/Δk ≈ λ²/Δλ，最後一步採用窄頻近似。\n參考：https://mpl.mpg.de/fileadmin/user_upload/Lecture_3_1.pdf",
-    "title": "[第三期第26集]時間相干性",
-    "youtube": "https://www.youtube.com/watch?v=WxuBpgp-yUQ"
-  },
-  {
-    "category": "第三期・光學",
     "description": "",
     "title": "[第三期第27集]多光束干涉",
     "youtube": "https://www.youtube.com/watch?v=4BJ8W-OJJ20"

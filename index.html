@@ -27,7 +27,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=11">
+  <script>
+    // 先套用白天／黑夜模式，避免畫面先閃一下黑色
+    (function () {
+      var t = "dark";
+      try { t = (JSON.parse(localStorage.getItem("site-settings")) || {}).theme || "dark"; } catch (e) {}
+      if (t === "auto") t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      document.documentElement.dataset.theme = t;
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
   <canvas id="stars" aria-hidden="true"></canvas>
@@ -44,8 +53,73 @@
         <kbd>/</kbd>
       </label>
       <button id="account" class="account" hidden></button>
+      <button id="music-btn" class="tool-btn music-btn" aria-label="背景音樂" title="背景音樂">
+        <svg class="note-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>
+        <canvas id="viz-top" width="60" height="40" aria-hidden="true"></canvas>
+      </button>
+      <button id="settings-btn" class="tool-btn" aria-label="設定" aria-expanded="false" aria-controls="settings" title="設定">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
     </div>
   </header>
+
+  <div id="settings" class="settings" role="dialog" aria-label="設定" hidden>
+    <div class="set-head">
+      <strong>設定</strong>
+      <button id="settings-close" class="icon-btn icon-only" aria-label="關閉設定">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+
+    <section class="set-row">
+      <div class="set-label"><span>吉祥物活潑程度</span><em id="lively-label"></em></div>
+      <div class="lively">
+        <span id="lively-mascot" class="lively-mascot"></span>
+        <div class="lively-ctrl">
+          <input id="set-lively" type="range" min="0" max="3" step="1" aria-label="吉祥物活潑程度">
+          <div class="ticks"><span>不動</span><span>安靜</span><span>普通</span><span>最活潑</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="set-row">
+      <div class="set-label"><span>外觀</span></div>
+      <div id="set-theme" class="seg" role="radiogroup" aria-label="外觀">
+        <button data-v="dark" role="radio">🌙 黑夜</button>
+        <button data-v="light" role="radio">☀️ 白天</button>
+        <button data-v="auto" role="radio">跟隨裝置</button>
+      </div>
+    </section>
+
+    <section class="set-row">
+      <div class="set-label">
+        <span>背景音樂</span>
+        <label class="switch"><input id="set-music" type="checkbox" aria-label="背景音樂"><span class="track"><span class="thumb-dot"></span></span></label>
+      </div>
+      <div class="vol">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+        <input id="set-volume" type="range" min="0" max="100" step="1" aria-label="背景音樂音量">
+        <span id="vol-val"></span>
+      </div>
+      <p class="set-note">在首頁待機時播放，看影片時會自動停下來</p>
+    </section>
+
+    <section class="set-row">
+      <div class="set-label">
+        <span>聲波顯示</span>
+        <label class="switch"><input id="set-waves" type="checkbox" aria-label="聲波顯示"><span class="track"><span class="thumb-dot"></span></span></label>
+      </div>
+      <p class="set-note">右上角的音樂聲波，和播放影片時的聲波</p>
+    </section>
+
+    <section class="set-row">
+      <div class="set-label">
+        <span>減少動畫</span>
+        <label class="switch"><input id="set-calm" type="checkbox" aria-label="減少動畫"><span class="track"><span class="thumb-dot"></span></span></label>
+      </div>
+      <p class="set-note">容易頭暈時可以打開（會重新整理頁面）</p>
+    </section>
+  </div>
 
   <section class="hero">
     <div class="hero-bg" aria-hidden="true">
@@ -120,7 +194,6 @@
       <span class="footer-links">
         <a href="privacy.html">隱私權政策</a>
         <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener">YouTube 服務條款</a>
-        <button id="calm" class="link-btn">減少動畫</button>
         <button id="reset" class="link-btn">清除學習紀錄</button>
       </span>
     </div>
@@ -129,7 +202,10 @@
   <dialog id="player" aria-label="影片播放">
     <div id="ambient" class="ambient" aria-hidden="true"></div>
     <div class="player-top">
-      <div class="crumb"><span id="crumb-unit" class="pill"></span><span id="crumb-ep" class="pixel-text"></span></div>
+      <div class="crumb">
+        <span id="crumb-unit" class="pill"></span><span id="crumb-ep" class="pixel-text"></span>
+        <span class="wave-wrap" title="影片聲音（示意）"><canvas id="viz-player" width="280" height="56" aria-hidden="true"></canvas></span>
+      </div>
       <div class="player-actions">
         <button id="share" class="icon-btn" title="複製這一集的連結">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
@@ -201,6 +277,6 @@
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <script src="videos.js?v=9"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>

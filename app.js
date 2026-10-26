@@ -33,6 +33,17 @@ const pick = (list) => list[Math.floor(Math.random() * list.length)];
 // 「減少動畫」由觀眾自己在網站最下面切換（存在這台裝置的瀏覽器裡）
 const reduceMotion = (() => { try { return localStorage.getItem("calm-motion") === "1"; } catch (e) { return false; } })();
 document.documentElement.classList.toggle("calm", reduceMotion);
+
+// ---------- 設定（首頁右上角的齒輪，存在這台裝置的瀏覽器裡） ----------
+// lively：吉祥物活潑程度 0 不動、1 安靜、2 普通、3 最活潑
+const settings = { lively: 3, theme: "dark", music: true, volume: 35, waves: true };
+try { Object.assign(settings, JSON.parse(localStorage.getItem("site-settings"))); } catch (e) {}
+function saveSettings() {
+  try { localStorage.setItem("site-settings", JSON.stringify(settings)); } catch (e) {}
+}
+// 吉祥物完全不動：活潑程度調到最低，或開了「減少動畫」
+const still = () => reduceMotion || settings.lively === 0;
+document.documentElement.classList.toggle("mascot-still", still());
 const CHECK = `<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>`;
 const COLORS = ["#ff5c8a", "#ffb84d", "#6bcbff", "#7bd389", "#b388ff", "#ff9a62"];
 
@@ -148,32 +159,50 @@ function renderTabs() {
 // ---------- 單元的顏色、圖示 ----------
 
 const unitNames = [...playlists.keys()];
-const UNIT_COLORS = ["#ff9a62", "#ff5c8a", "#a78bfa", "#4cc9f0", "#7bd389", "#ffd166"];
 
 // 每個單元一個像素小圖示：# 主色、o 淡色、+ 白色
-const ICONS = [
-  // 衝刺中的小球（速度）
-  ["............", "............", "......####..", ".....######.", "oo..##+#####", "....#++#####",
-   "ooo.########", "....########", "oo...######.", "......####..", "............", "............"],
-  // 蘋果
-  [".....o......", "......o##...", "...######...", "..########..", ".##+#######.", ".#++#######.",
-   ".#+########.", ".##########.", ".##########.", "..########..", "...###.###..", "............"],
-  // 行星與軌道
-  ["............", "....oooo....", "..oo....oo..", ".o........o.", ".o...##...o+", "o...####...o",
-   "o...####...o", ".o...##...o.", "+o........o.", "..oo....oo..", "....oooo....", "............"],
-  // 火焰
-  [".....#......", ".....##.....", "....###.....", "....####.#..", "...#####.#..", "..#########.",
-   "..####+####.", ".####+++###.", ".###+++++##.", ".###+++++##.", "..###+++##..", "...######..."],
-  // 閃電
-  [".......####.", "......####..", ".....####...", "....####....", "...########.", "........##..",
-   ".......##...", "......##....", ".....##.....", "....##......", "...#........", "............"],
-  // 波
-  ["............", "............", "............", ".##......##.", "#..#....#..#", "....#..#....",
-   ".....##.....", "............", ".oo......oo.", "o..o....o..o", "....o..o....", ".....oo....."],
+const ICONS = {
+  ball: ["............", "............", "......####..", ".....######.", "oo..##+#####", "....#++#####",
+    "ooo.########", "....########", "oo...######.", "......####..", "............", "............"],
+  apple: [".....o......", "......o##...", "...######...", "..########..", ".##+#######.", ".#++#######.",
+    ".#+########.", ".##########.", ".##########.", "..########..", "...###.###..", "............"],
+  orbit: ["............", "....oooo....", "..oo....oo..", ".o........o.", ".o...##...o+", "o...####...o",
+    "o...####...o", ".o...##...o.", "+o........o.", "..oo....oo..", "....oooo....", "............"],
+  flame: [".....#......", ".....##.....", "....###.....", "....####.#..", "...#####.#..", "..#########.",
+    "..####+####.", ".####+++###.", ".###+++++##.", ".###+++++##.", "..###+++##..", "...######..."],
+  pendulum: ["..########..", "......#.....", ".....o#.....", "....o..#....", "...o....#...", "..o......#..",
+    ".o........#.", "ooo......###", "ooo.....##+#", ".o......####", ".........##.", "............"],
+  charge: [".....o......", "..o..o..o...", "...o.o.o....", "....###.....", "oo.##+##.oo.", "..##+++##...",
+    "oo.##+##.oo.", "....###.....", "...o.o.o....", "..o..o..o...", ".....o......", "............"],
+  battery: ["............", ".....##.....", "..########..", "..#......#..", "..#.####.#..", "..#.####.#..",
+    "..#......#..", "..#.oooo.#..", "..#.oooo.#..", "..#......#..", "..########..", "............"],
+  magnet: ["............", ".+++....+++.", ".###....###.", ".###....###.", ".###....###.", ".###....###.",
+    ".###....###.", ".####..####.", ".##########.", "..########..", "...######...", "............"],
+  lightning: [".......####.", "......####..", ".....####...", "....####....", "...########.", "........##..",
+    ".......##...", "......##....", ".....##.....", "....##......", "...#........", "............"],
+  capacitor: ["............", ".....##.....", ".....##.....", ".##########.", "............", ".o.o.o.o.o..",
+    "..o.o.o.o.o.", "............", ".##########.", ".....##.....", ".....##.....", "............"],
+  bulb: ["....####....", "...#....#...", "..#..++..#..", "..#.+..+.#..", "..#..++..#..", "...#....#...",
+    "....#..#....", "....####....", "....oooo....", "....####....", ".....##.....", "............"],
+  wave: ["............", "............", "............", ".##......##.", "#..#....#..#", "....#..#....",
+    ".....##.....", "............", ".oo......oo.", "o..o....o..o", "....o..o....", ".....oo....."],
+  prism: ["............", "......#.....", ".....###....", ".....#+#....", "....#+++#...", "oooo#+++#.##",
+    "...#+++++###", "...#######..", "..........##", "............", "............", "............"],
+  star: [".....##.....", ".....##.....", "....####....", "############", ".##########.", "...######...",
+    "...######...", "..###..###..", "..##....##..", ".##......##.", "............", "............"],
+  magnifier: ["...####.....", "..#....#....", ".#..++..#...", ".#.+....#...", ".#......#...", "..#....#....",
+    "...#####....", "........##..", ".........##.", "..........##", "............", "............"],
+};
+
+// 依單元名稱裡的關鍵字挑圖示（前面的優先），每個單元的圖示都不重複
+const ICON_KEYWORDS = [
+  ["運動學", "ball"], ["能量", "apple"], ["分析", "orbit"], ["熱", "flame"], ["振", "pendulum"],
+  ["靜電", "charge"], ["電流", "battery"], ["電磁場", "wave"], ["磁場", "magnet"], ["感應", "lightning"],
+  ["介質", "capacitor"], ["電路", "bulb"], ["光", "prism"], ["波", "wave"],
 ];
 
-function pixelIcon(i, color) {
-  const rows = ICONS[i % ICONS.length];
+function pixelIcon(name, color) {
+  const rows = ICONS[name] || ICONS.star;
   const fill = { "#": color, o: color, "+": "#fff" };
   let rects = "";
   rows.forEach((row, y) => [...row].forEach((c, x) => {
@@ -182,11 +211,42 @@ function pixelIcon(i, color) {
   return `<svg class="picon" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
 }
 
+const UNIT_COLORS = ["#ff9a62", "#ff5c8a", "#a78bfa", "#4cc9f0", "#7bd389", "#ffd166", "#f87171", "#60a5fa", "#2dd4bf", "#a3e635", "#e2a96b", "#818cf8", "#f0abfc", "#fb923c"];
+const unitCfg = (name) => (typeof UNITS !== "undefined" && UNITS[name]) || {};
+
+// 先照 videos.js 指定的 icon，再照關鍵字，剩下的用還沒被用過的圖示
+const unitIconName = (() => {
+  const used = new Set();
+  const out = {};
+  for (const name of unitNames) {
+    const want = unitCfg(name).icon;
+    if (want && ICONS[want] && !used.has(want)) {
+      out[name] = want;
+      used.add(want);
+    }
+  }
+  for (const name of unitNames) {
+    if (out[name]) continue;
+    const hit = ICON_KEYWORDS.find(([k, icon]) => name.includes(k) && !used.has(icon));
+    if (hit) {
+      out[name] = hit[1];
+      used.add(hit[1]);
+    }
+  }
+  for (const name of unitNames) {
+    if (out[name]) continue;
+    const free = Object.keys(ICONS).find((icon) => !used.has(icon)) || "star";
+    out[name] = free;
+    used.add(free);
+  }
+  return out;
+})();
+
 function unitInfo(name) {
   const i = unitNames.indexOf(name);
-  const cfg = (typeof UNITS !== "undefined" && UNITS[name]) || {};
+  const cfg = unitCfg(name);
   const color = cfg.color || UNIT_COLORS[i % UNIT_COLORS.length];
-  return { no: i + 1, color, desc: cfg.desc || "", icon: pixelIcon(i, color) };
+  return { no: i + 1, color, desc: cfg.desc || "", icon: pixelIcon(unitIconName[name], color) };
 }
 
 // ---------- 影片卡片與單元 ----------
@@ -316,7 +376,7 @@ function onScreen(el) {
 
 async function launch(v, target) {
   if (flying || player.open) return;
-  if (reduceMotion) return openPlayer(v);
+  if (still()) return openPlayer(v);
   flying = true;
   const from = onScreen(heroMascot) ? heroMascot : $("brand-mascot");
   const a = from.getBoundingClientRect();
@@ -372,7 +432,7 @@ function comeBack() {
   const el = away;
   away = null;
   el.classList.remove("away");
-  if (reduceMotion) return;
+  if (still()) return;
   el.animate([
     { transform: el === heroMascot ? "translateY(-260%)" : "translateY(-120%)", opacity: 0 },
     { transform: el === heroMascot ? "translateY(-100%)" : "none", opacity: 1, offset: 0.55 },
@@ -550,6 +610,9 @@ function openPlayer(v) {
     history.pushState({ player: true }, "", `#v=${v.id}`);
     pushedHistory = true;
     document.documentElement.classList.add("lock");
+    openSettings(false);
+    music.ducked = true;
+    musicUpdate();
     player.showModal();
     clearInterval(timer);
     timer = setInterval(track, 3000);
@@ -564,7 +627,9 @@ function openPlayer(v) {
   if (resume) setTimeout(() => { if (player.open && current === v) askResume(v, resume); }, wasOpen ? 600 : 1500);
   updateSocialUI();
   refreshSocial(v);
-  listEl.querySelector(".now").scrollIntoView({ block: "nearest" });
+  // 只捲動右邊的集數清單，不要把整個播放畫面捲走（手機上影片會跑出畫面）
+  const nowRow = listEl.querySelector(".now");
+  if (nowRow && listEl.scrollHeight > listEl.clientHeight) listEl.scrollTop = nowRow.offsetTop - listEl.clientHeight / 2 + nowRow.offsetHeight / 2;
 }
 
 function step(d) {
@@ -583,6 +648,8 @@ player.addEventListener("close", () => {
   if (yt && yt.stopVideo) yt.stopVideo();
   else $("yt").innerHTML = "";
   document.documentElement.classList.remove("lock");
+  music.ducked = false;
+  musicUpdate();
   if (pushedHistory) {
     pushedHistory = false;
     if (!closingFromBack) history.back();
@@ -896,30 +963,31 @@ async function exercise() {
   }
 }
 
+// [動作, 出現機率權重, 安靜模式也會做]
 const ACTIONS = [
-  [() => walkTo(Math.random() * maxX()), 16],
+  [() => walkTo(Math.random() * maxX()), 16, true],
   [() => hop(), 5],
-  [() => wave(), 5],
-  [lookAround, 7],
+  [() => wave(), 5, true],
+  [lookAround, 7, true],
   [chasePixel, 6],
   [trip, 4],
-  [() => sit(5000 + Math.random() * 5000), 5],
-  [() => say(pick(LINES)), 7],
+  [() => sit(5000 + Math.random() * 5000), 5, true],
+  [() => say(pick(LINES)), 7, true],
   [throwBall, 7],
   [newtonApple, 5],
-  [readBook, 6],
+  [readBook, 6, true],
   [dance, 5],
   [spin, 5],
   [moonwalk, 4],
-  [stretch, 5],
+  [stretch, 5, true],
   [sneeze, 3],
-  [peek, 5],
+  [peek, 5, true],
   [exercise, 4],
 ];
 let lastAction = null;
 
 function pickAction() {
-  const pool = ACTIONS.filter(([f]) => f !== lastAction);
+  const pool = ACTIONS.filter(([f, , calm]) => f !== lastAction && (settings.lively >= 2 || calm));
   let r = Math.random() * pool.reduce((s, [, w]) => s + w, 0);
   for (const [f, w] of pool) if ((r -= w) <= 0) return (lastAction = f);
   return pool[0][0];
@@ -940,9 +1008,14 @@ async function act() {
   }
 }
 
-function schedule(ms = 6000 + Math.random() * 9000) {
+// 每個活潑程度：多久做一次隨機動作（最短 + 隨機）
+const LIVELY_DELAY = [null, [28000, 22000], [14000, 12000], [6000, 9000]];
+
+function schedule(ms) {
   clearTimeout(buddy.timer);
-  if (player.open && !reduceMotion) buddy.timer = setTimeout(act, ms);
+  if (!player.open || still()) return;
+  const [base, spread] = LIVELY_DELAY[settings.lively];
+  buddy.timer = setTimeout(act, Math.max(ms ?? 0, base + Math.random() * spread));
 }
 
 function nap(on) {
@@ -956,6 +1029,10 @@ function buddyOnState(s) {
   clearTimeout(buddy.napTimer);
   clearTimeout(buddy.waitTimer);
   bsvg.classList.remove("tapping");
+  if (still()) {
+    if (s === YT.PlayerState.ENDED) askSupport(current);
+    return;
+  }
   if (s === YT.PlayerState.PLAYING && buddy.sleeping) {
     nap(false);
     hop();
@@ -995,7 +1072,7 @@ async function buddyEnter(quiet = false) {
   buddyEl.classList.add("show");
   place(maxX() * 0.06);
   face(1);
-  if (reduceMotion) return;
+  if (still()) return;
   await hopEl.animate([
     { transform: "translateY(-180px)", opacity: 0 },
     { transform: "translateY(-180px)", opacity: 1, offset: 0.2 },
@@ -1022,7 +1099,7 @@ function buddyOnProgress(v, t, d) {
   const prev = buddy.lastId === v.id ? buddy.lastT : null;
   buddy.lastId = v.id;
   buddy.lastT = t;
-  if (buddy.busy || buddy.sleeping || prev == null) return;
+  if (still() || buddy.busy || buddy.sleeping || prev == null) return;
   if (t < prev - 5) say(pick(["再看一次！好認真 👍", "倒帶～這段很重要對吧"]), 2400);
   else if (t > prev + 20) {
     say(pick(["欸欸，跳過了喔 👀", "快轉！你很趕嗎？"]), 2400);
@@ -1035,7 +1112,7 @@ function buddyOnProgress(v, t, d) {
 
 function buddyNewEpisode() {
   if (buddy.sleeping) nap(false);
-  if (!buddy.busy && !reduceMotion) hop();
+  if (!buddy.busy && !still()) hop();
 }
 
 function buddyLeave() {
@@ -1058,6 +1135,7 @@ buddyEl.onclick = async () => {
     return say("啊！我沒睡！😳", 1800);
   }
   if (buddy.busy) return;
+  if (still()) return say(pick(POKES), 1800);
   buddy.busy = true;
   confetti(r.left + r.width / 2, r.top + r.height / 3, 14, 0.3);
   await Promise.all([hop(20), say(pick(POKES), 1800)]);
@@ -1066,7 +1144,7 @@ buddyEl.onclick = async () => {
 
 // 沒事的時候，眼睛會跟著滑鼠看
 player.addEventListener("mousemove", (e) => {
-  if (buddy.busy || buddy.sleeping) return;
+  if (still() || buddy.busy || buddy.sleeping) return;
   const r = buddyEl.getBoundingClientRect();
   const right = e.clientX > r.left + r.width / 2;
   look(right !== buddy.facing > 0 ? "look-r" : "");
@@ -1100,7 +1178,7 @@ function onFullscreenChange() {
   const box = $("toasts");
   if (box.parentElement !== layer()) layer().appendChild(box);
   requestAnimationFrame(() => place(buddy.x));
-  if (on && !buddy.busy && !reduceMotion) hop(22);
+  if (on && !buddy.busy && !still()) hop(22);
 }
 document.addEventListener("fullscreenchange", onFullscreenChange);
 document.addEventListener("webkitfullscreenchange", onFullscreenChange);
@@ -1335,10 +1413,13 @@ async function showAsk(text, buttons, ms = 20000) {
   askButtons = buttons;
   buddyEl.classList.remove("talking");
   buddy.busy = true;
-  await walkTo(0);
-  face(1);
-  look("look-c");
-  bsvg.classList.add("waving", "both", "begging");
+  if (still()) place(0);
+  else {
+    await walkTo(0);
+    face(1);
+    look("look-c");
+    bsvg.classList.add("waving", "both", "begging");
+  }
   lane.classList.add("asking");
   lane.scrollIntoView({ block: "nearest", behavior: "smooth" });
   clearTimeout(ask.timer);
@@ -1372,7 +1453,7 @@ function jumpTo(v, t) {
   if (current !== v) return;
   if (yt && yt.seekTo) yt.seekTo(t, true);
   else $("yt").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1&start=${t}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
-  hop(14, 360);
+  if (!still()) hop(14, 360);
   say("咻～跳過去了！", 1600);
 }
 
@@ -1397,7 +1478,7 @@ function thanks(text) {
   const r = buddyEl.getBoundingClientRect();
   confetti(r.left + r.width / 2, r.top + r.height / 3, 30, 0.5);
   say(text, 2600);
-  cheer();
+  if (!still()) cheer();
 }
 
 updateAccountUI();
@@ -1487,13 +1568,317 @@ function countPlay() {
   counter("hit", "plays").then((n) => showCount("sv-plays", n));
 }
 
-// ---------- 其他 ----------
+// ---------- 白天／黑夜模式 ----------
 
-$("calm").textContent = reduceMotion ? "開啟動畫" : "減少動畫";
-$("calm").onclick = () => {
-  try { localStorage.setItem("calm-motion", reduceMotion ? "0" : "1"); } catch (e) {}
+const lightQuery = matchMedia("(prefers-color-scheme: light)");
+
+function applyTheme() {
+  const t = settings.theme === "auto" ? (lightQuery.matches ? "light" : "dark") : settings.theme;
+  document.documentElement.dataset.theme = t;
+  document.querySelector('meta[name="theme-color"]').content = t === "light" ? "#f6f2ec" : "#07070a";
+}
+if (lightQuery.addEventListener) lightQuery.addEventListener("change", () => settings.theme === "auto" && applyTheme());
+
+// ---------- 背景音樂：用程式即時合成的輕柔合成器音樂，不需要音樂檔，也沒有版權問題 ----------
+
+const music = { ctx: null, master: null, analyser: null, bus: null, playing: false, unlocked: false, ducked: false, timer: null, stopT: null, nextTime: 0, step: 0 };
+// 和弦進行 Am9 → Fmaj7 → Cmaj7 → G6，每個和弦兩小節
+const CHORDS = [[57, 60, 64, 67, 71], [53, 57, 60, 64, 69], [48, 55, 59, 64, 67], [55, 59, 62, 64, 71]];
+const BEAT = 60 / 76;
+const STEP = BEAT / 2; // 八分音符
+const ARP = [0, 2, 4, 1, 3, 2, 4, 1];
+const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
+function musicInit() {
+  if (music.ctx) return true;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return false;
+  const ctx = new AC();
+  const master = ctx.createGain();
+  master.gain.value = 0;
+  const bus = ctx.createBiquadFilter();
+  bus.type = "lowpass";
+  bus.frequency.value = 2300;
+  const delay = ctx.createDelay(1);
+  delay.delayTime.value = STEP * 3;
+  const feedback = ctx.createGain();
+  feedback.gain.value = 0.3;
+  const wet = ctx.createGain();
+  wet.gain.value = 0.26;
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  analyser.smoothingTimeConstant = 0.8;
+  bus.connect(master);
+  bus.connect(delay);
+  delay.connect(feedback);
+  feedback.connect(delay);
+  delay.connect(wet);
+  wet.connect(master);
+  master.connect(analyser);
+  analyser.connect(ctx.destination);
+  Object.assign(music, { ctx, master, analyser, bus });
+  return true;
+}
+
+function tone(freq, t, dur, { type = "sine", gain = 0.1, attack = 0.01, release = 0.3, detune = 0 } = {}) {
+  const { ctx, bus } = music;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  o.detune.value = detune;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + attack);
+  g.gain.setTargetAtTime(0, t + dur, release / 3);
+  o.connect(g);
+  g.connect(bus);
+  o.start(t);
+  o.stop(t + dur + release + 0.2);
+}
+
+// 每 0.25 秒把接下來 1.2 秒要彈的音先排好
+function scheduleMusic() {
+  const { ctx } = music;
+  while (music.nextTime < ctx.currentTime + 1.2) {
+    const t = music.nextTime;
+    const step = music.step;
+    const chord = CHORDS[Math.floor(step / 16) % CHORDS.length];
+    if (step % 16 === 0) {
+      chord.slice(0, 4).forEach((m, i) => tone(mtof(m), t, BEAT * 7.5, { type: "triangle", gain: 0.032, attack: 1.4, release: 2.6, detune: i % 2 ? 7 : -7 }));
+    }
+    if (step % 8 === 0) tone(mtof(chord[0] - 24), t, BEAT * 3.5, { gain: 0.085, attack: 0.06, release: 0.9 });
+    if (Math.random() < 0.7) {
+      const m = chord[ARP[step % 8] % chord.length] + 12;
+      tone(mtof(m), t, STEP * 0.9, { gain: 0.04 + Math.random() * 0.02, attack: 0.006, release: 0.7 });
+    }
+    music.nextTime += STEP;
+    music.step++;
+  }
+}
+
+// 要不要出聲：有開音樂、音量不是 0、使用者點過網頁（瀏覽器規定）、沒在看影片、分頁在前景
+function musicUpdate() {
+  const want = settings.music && settings.volume > 0 && music.unlocked && !music.ducked && !document.hidden;
+  if (want) {
+    if (!musicInit()) return;
+    clearTimeout(music.stopT);
+    music.ctx.resume();
+    if (!music.playing) {
+      music.playing = true;
+      music.nextTime = music.ctx.currentTime + 0.1;
+      scheduleMusic();
+      music.timer = setInterval(scheduleMusic, 250);
+    }
+    ramp(Math.pow(settings.volume / 100, 1.5) * 0.9, 1.4);
+  } else if (music.playing) {
+    ramp(0, 0.8);
+    clearTimeout(music.stopT);
+    music.stopT = setTimeout(() => {
+      clearInterval(music.timer);
+      music.playing = false;
+      music.ctx.suspend();
+    }, 1000);
+  }
+  $("music-btn").classList.toggle("on", settings.music && settings.volume > 0);
+}
+
+function ramp(target, sec) {
+  const g = music.master.gain;
+  const now = music.ctx.currentTime;
+  g.cancelScheduledValues(now);
+  g.setValueAtTime(g.value, now);
+  g.linearRampToValueAtTime(target, now + sec);
+}
+
+// 瀏覽器規定要使用者先點過網頁才能出聲
+const unlockMusic = () => {
+  if (music.unlocked) return;
+  music.unlocked = true;
+  musicUpdate();
+};
+["pointerdown", "touchend", "keydown"].forEach((ev) => addEventListener(ev, unlockMusic, { capture: true, passive: true }));
+document.addEventListener("visibilitychange", musicUpdate);
+
+$("music-btn").onclick = () => {
+  settings.music = !(settings.music && settings.volume > 0);
+  if (settings.music && settings.volume === 0) settings.volume = 35;
+  saveSettings();
+  syncSettingsUI();
+  musicUpdate();
+  toast(settings.music ? "背景音樂開啟 🎵" : "背景音樂關閉");
+};
+
+// ---------- 聲波 ----------
+// 首頁：真的跟著背景音樂跳動。
+// 播放影片時：YouTube 不讓網站讀取影片的聲音，所以是依照「正在播放、音量大小」模擬說話的起伏。
+
+const vizTop = $("viz-top");
+const vizPlayer = $("viz-player");
+const speech = { pauseEnd: 0, phraseEnd: 0, level: 0 };
+let freqData = null;
+
+function speechLevel(now) {
+  if (now > speech.phraseEnd) {
+    speech.pauseEnd = now + 200 + Math.random() * 700;
+    speech.phraseEnd = speech.pauseEnd + 1200 + Math.random() * 2600;
+  }
+  const talking = now > speech.pauseEnd;
+  const target = talking ? 0.5 + 0.5 * Math.abs(Math.sin((now / 1000) * Math.PI * 4.4 + Math.sin(now / 610) * 2.2)) : 0.05;
+  speech.level += (target - speech.level) * 0.22;
+  return speech.level;
+}
+
+function lessonVolume() {
+  if (!yt || !yt.getPlayerState || yt.getPlayerState() !== YT.PlayerState.PLAYING) return 0;
+  if (yt.isMuted && yt.isMuted()) return 0;
+  return yt.getVolume ? yt.getVolume() / 100 : 1;
+}
+
+// 把單元色和深色混在一起（白天模式的淺色背景上比較清楚）
+function inkColor(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const mix = (c, d) => Math.round(c * 0.6 + d * 0.4);
+  return `rgb(${mix(n >> 16, 28)}, ${mix((n >> 8) & 255, 24)}, ${mix(n & 255, 35)})`;
+}
+
+function drawBars(canvas, values, color) {
+  const g = canvas.getContext("2d");
+  const { width: w, height: h } = canvas;
+  g.clearRect(0, 0, w, h);
+  const n = values.length;
+  const gap = w / n;
+  const bw = Math.max(2, gap * 0.55);
+  const grad = g.createLinearGradient(0, h, 0, 0);
+  if (Array.isArray(color)) color.forEach((c, i) => grad.addColorStop(i / (color.length - 1), c));
+  g.fillStyle = Array.isArray(color) ? grad : color;
+  values.forEach((v, i) => {
+    const bh = Math.max(bw, v * h);
+    const x = i * gap + (gap - bw) / 2;
+    const y = (h - bh) / 2;
+    g.beginPath();
+    if (g.roundRect) g.roundRect(x, y, bw, bh, bw / 2);
+    else g.rect(x, y, bw, bh);
+    g.fill();
+  });
+}
+
+function vizLoop(now) {
+  requestAnimationFrame(vizLoop);
+  if (document.hidden || !settings.waves) return;
+  // 首頁右上角：背景音樂
+  if (!player.open) {
+    const n = 7;
+    const vals = new Array(n).fill(0.12);
+    if (music.playing && music.analyser) {
+      freqData = freqData || new Uint8Array(music.analyser.frequencyBinCount);
+      music.analyser.getByteFrequencyData(freqData);
+      for (let i = 0; i < n; i++) {
+        const bin = Math.floor(2 + Math.pow(i / n, 1.6) * 60);
+        vals[i] = Math.max(0.12, Math.min(1, (freqData[bin] / 255) * 1.35));
+      }
+    }
+    drawBars(vizTop, vals, ["#ff5c8a", "#ff8a55", "#ffb84d"]);
+    return;
+  }
+  // 播放器：影片聲音（模擬）
+  const lv = speechLevel(now) * lessonVolume();
+  const n = 22;
+  const vals = [];
+  for (let i = 0; i < n; i++) {
+    const shape = 0.35 + 0.65 * Math.sin((i / (n - 1)) * Math.PI);
+    const jitter = 0.55 + 0.45 * Math.sin(now / 90 + i * 1.7) * Math.sin(now / 157 + i * 0.6);
+    vals.push(Math.max(0.08, Math.min(1, lv * shape * (0.6 + jitter * 0.7))));
+  }
+  const u = getComputedStyle(player).getPropertyValue("--u").trim() || "#ff9a62";
+  drawBars(vizPlayer, vals, document.documentElement.dataset.theme === "light" ? inkColor(u) : u);
+}
+requestAnimationFrame(vizLoop);
+
+// ---------- 設定面板 ----------
+
+const panel = $("settings");
+const LIVELY_NAMES = ["不動", "安靜", "普通", "最活潑"];
+$("lively-mascot").innerHTML = mascot("bob");
+
+function syncSettingsUI() {
+  $("set-lively").value = settings.lively;
+  $("lively-label").textContent = LIVELY_NAMES[settings.lively];
+  $("lively-mascot").className = `lively-mascot lv${still() ? 0 : settings.lively}`;
+  $("set-theme").querySelectorAll("button").forEach((b) => {
+    const on = b.dataset.v === settings.theme;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-checked", on);
+  });
+  $("set-music").checked = settings.music;
+  $("set-volume").value = settings.volume;
+  $("set-volume").disabled = !settings.music;
+  $("vol-val").textContent = settings.volume;
+  $("set-waves").checked = settings.waves;
+  $("set-calm").checked = reduceMotion;
+  document.documentElement.classList.toggle("no-waves", !settings.waves);
+  document.documentElement.classList.toggle("mascot-still", still());
+}
+
+function openSettings(open) {
+  panel.hidden = !open;
+  $("settings-btn").setAttribute("aria-expanded", open);
+  if (open) syncSettingsUI();
+}
+
+$("settings-btn").onclick = (e) => {
+  e.stopPropagation();
+  openSettings(panel.hidden);
+};
+$("settings-close").onclick = () => openSettings(false);
+document.addEventListener("click", (e) => {
+  if (!panel.hidden && !panel.contains(e.target) && !e.target.closest("#settings-btn")) openSettings(false);
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !panel.hidden) openSettings(false); });
+
+$("set-lively").oninput = (e) => {
+  settings.lively = Number(e.target.value);
+  saveSettings();
+  syncSettingsUI();
+  if (still()) clearTimeout(buddy.timer);
+};
+$("set-theme").onclick = (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  settings.theme = b.dataset.v;
+  saveSettings();
+  applyTheme();
+  syncSettingsUI();
+  drawStars();
+};
+$("set-music").onchange = (e) => {
+  settings.music = e.target.checked;
+  if (settings.music && settings.volume === 0) settings.volume = 35;
+  saveSettings();
+  syncSettingsUI();
+  musicUpdate();
+};
+$("set-volume").oninput = (e) => {
+  settings.volume = Number(e.target.value);
+  saveSettings();
+  syncSettingsUI();
+  musicUpdate();
+};
+$("set-waves").onchange = (e) => {
+  settings.waves = e.target.checked;
+  saveSettings();
+  syncSettingsUI();
+};
+$("set-calm").onchange = (e) => {
+  try { localStorage.setItem("calm-motion", e.target.checked ? "1" : "0"); } catch (err) {}
   location.reload();
 };
+
+applyTheme();
+syncSettingsUI();
+
+// ---------- 其他 ----------
 
 $("reset").onclick = () => {
   if (!confirm("確定要清除這台裝置上的觀看紀錄嗎？")) return;
@@ -1532,7 +1917,9 @@ heroMascot.onclick = () => {
 // 首頁吉祥物自己會動：揮手、東張西望、伸懶腰、跳一下
 function heroIdle() {
   setTimeout(heroIdle, 6000 + Math.random() * 7000);
-  if (reduceMotion || document.hidden || player.open || flying || away || !onScreen(heroMascot)) return;
+  if (still() || document.hidden || player.open || flying || away || !onScreen(heroMascot)) return;
+  if (settings.lively === 1 && Math.random() < 0.6) return;
+  if (settings.lively === 2 && Math.random() < 0.3) return;
   const svg = heroMascot.querySelector("svg");
   const r = Math.random();
   if (r < 0.3) {
@@ -1555,7 +1942,7 @@ setTimeout(heroIdle, 4000);
 // 首頁吉祥物的眼睛跟著滑鼠
 let eyeFrame = 0;
 document.addEventListener("mousemove", (e) => {
-  if (player.open || eyeFrame) return;
+  if (still() || player.open || eyeFrame) return;
   eyeFrame = requestAnimationFrame(() => {
     eyeFrame = 0;
     for (const el of [heroMascot, $("brand-mascot")]) {
@@ -1571,7 +1958,7 @@ document.addEventListener("mousemove", (e) => {
 // 頁尾的吉祥物偶爾停下來揮手
 const walker = $("walker");
 setInterval(() => {
-  if (reduceMotion || document.hidden || Math.random() < 0.5) return;
+  if (still() || document.hidden || Math.random() < 0.5) return;
   const svg = walker.querySelector("svg");
   walker.style.animationPlayState = "paused";
   svg.classList.remove("walking");
